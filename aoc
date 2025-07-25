@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+function usage() {
+    command cat <<USAGE >&2
+Usage: aoc [mode] [language] [year] [day]
+modes:
+    new
+        scaffolds an empty solution file from templates files
+    run
+        run the solution on the actual input
+    test
+        run the solution on test input
+languages:
+    the list of available languages:
+        zig
+year and day  in YYYY and DD format
+USAGE
+}
+
+declare -rA lang_ext=(
+    ["zig"]="zig"
+)
+
+if [[ $# -eq 1 && "$1" == "help" ]]; then
+    >&2 usage
+    exit
+fi
+
+if [[ $# -ne 4 ]]; then
+    >&2 echo provide appropriate arguments
+    usage
+    exit 1
+fi
+
+mode=$1
+language=$2
+year=$3
+day=$4
+
+if [[ ! $year =~ ^[0-9]{4}$ || $year -lt 2015 || ! $day =~ ^[0-9]{2}$ || ${day#0} -lt 1 || ${day#0} -gt 25 ]]; then
+    >&2 echo invalid parameters
+    usage
+    exit 1
+fi
+
+if [[ -z ${lang_ext[$language]} ]]; then
+    >&2 echo invalid language selected
+    usage
+    exit 1
+fi
+
+case $mode in
+new)
+    touch {inputs,test_inputs,test_outputs}/$year-$day.txt
+    [[ -f $language/sol/$year-$day.${lang_ext[$language]} ]] || cp templates/template.${lang_ext[$language]} $language/sol/$year-$day.${lang_ext[$language]}
+    exit 0
+    ;;
+test | run) ;;
+*)
+    >&2 echo invalid mode selected
+    usage
+    exit 1
+    ;;
+esac
+
+case $language in
+zig)
+    cd zig
+    case $mode in
+    run) zig build -Drelease run-${year}-${day} ;;
+    test) zig build test-${year}-${day} ;;
+    esac
+    ;;
+*)
+    >&2 echo unreachable
+    exit 1
+    ;;
+esac

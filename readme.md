@@ -1,0 +1,42 @@
+# AoC Solutions
+
+> This repository contains my solutions for [Advent of Code](https://adventofcode.com).
+
+## Repository structure
+
+```plaintext
+aoc-sols/
+|- inputs/
+|- test_inputs/
+|  |- YYYY-DD.txt
+|- test_outputs/
+|  |- YYYY-DD.txt
+|- aoc*
+|- license.md
+|- readme.md
+|- <language>/
+|  |- sol/
+|  |  |- YYYY-DD.<ext>
+```
+
+### Notes
+
+- Place your puzzle inputs in the inputs directory in a file names `YYYY-DD.txt`
+- Make sure the input files are without a newline character at the end.
+- There are directories for the solutions per language.
+
+## Requirements
+
+- A POSIX based operating system.
+- Language toolchains
+
+  | Language | Toolchain                                     |
+  | :------- | :-------------------------------------------- |
+  | zig      | [Zig compiler toolchain](https://ziglang.org) |
+
+## Usage Instructions
+
+- Run `chmod +x ./aoc` to make the **aoc** shell script executable.
+- Run `./aoc help` to get the help message to guide you further.
+
+## [MIT License](license.md)
