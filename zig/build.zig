@@ -28,9 +28,16 @@ pub fn build(b: *Build) !void {
         exe_mod.addImport("opts", opts.createModule());
 
         {
-            const run_exe_step = b.addRunArtifact(b.addExecutable(.{ .root_module = exe_mod, .name = base }));
+            const exe = b.addExecutable(.{ .root_module = exe_mod, .name = base });
+
+            const install_step = b.addInstallArtifact(exe, .{});
+            const run_exe_step = b.addRunArtifact(exe);
+
             const step_name = b.fmt("run-{s}", .{base});
-            b.step(step_name, step_name).dependOn(&run_exe_step.step);
+            const run_step = b.step(step_name, step_name);
+
+            run_step.dependOn(&install_step.step);
+            run_step.dependOn(&run_exe_step.step);
         }
         {
             const run_exe_unit_test_step = b.addRunArtifact(b.addTest(.{ .root_module = exe_mod }));

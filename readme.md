@@ -11,6 +11,7 @@ aoc-sols/
 |  |- YYYY-DD.txt
 |- test_outputs/
 |  |- YYYY-DD.txt
+|- .cookie
 |- aoc*
 |- license.md
 |- readme.md
@@ -24,6 +25,7 @@ aoc-sols/
 - Place your puzzle inputs in the inputs directory in a file names `YYYY-DD.txt`
 - Make sure the input files are without a newline character at the end.
 - There are directories for the solutions per language.
+- Place your AoC session cookie in the `.cookie` file to be used to fetch the puzzle input automatically.
 
 ## Requirements
 

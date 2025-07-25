@@ -51,8 +51,15 @@ fi
 
 case $mode in
 new)
-    touch {inputs,test_inputs,test_outputs}/$year-$day.txt
-    [[ -f $language/sol/$year-$day.${lang_ext[$language]} ]] || cp templates/template.${lang_ext[$language]} $language/sol/$year-$day.${lang_ext[$language]}
+    touch {test_inputs,test_outputs}/$year-$day.txt
+    if [[ ! -f inputs/${year}-${day}.txt && -f .cookie ]]; then
+        curl -sfLb "$(command cat .cookie)" https://adventofcode.com/${year}/day/${day}/input >inputs/${year}-${day}.txt
+    else
+        touch inputs/$year-$day.txt
+    fi
+    if [[ -f $language/sol/$year-$day.${lang_ext[$language]} ]]; then
+        cp templates/template.${lang_ext[$language]} $language/sol/$year-$day.${lang_ext[$language]}
+    fi
     exit 0
     ;;
 test | run) ;;
@@ -66,10 +73,7 @@ esac
 case $language in
 zig)
     cd zig
-    case $mode in
-    run) zig build -Drelease run-${year}-${day} ;;
-    test) zig build test-${year}-${day} ;;
-    esac
+    zig build -Drelease ${mode}-${year}-${day}
     ;;
 *)
     >&2 echo unreachable
