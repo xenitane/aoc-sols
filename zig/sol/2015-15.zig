@@ -33,28 +33,33 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
         try ingredients.append(ac, ingredient);
     }
 
-    findMaxScore(ingredients.items, SPOONS, 0, Ingredient{ 0, 0, 0, 0, 0 }, &res.first, &res.second);
+    findMaxScore(ingredients.items, SPOONS, Ingredient{ 0, 0, 0, 0, 0 }, &res.first, &res.second);
 
     return res;
 }
 
-fn findMaxScore(ingredients: []const Ingredient, spoons: usize, idx: usize, cur: Ingredient, first: *isize, second: *isize) void {
-    if (idx == ingredients.len) {
+fn findMaxScore(ingredients: []const Ingredient, spoons: usize, cur: Ingredient, first: *isize, second: *isize) void {
+    if (0 == ingredients.len) {
+        if (0 != spoons) {
+            return;
+        }
         const value = blk: {
             var prod: isize = 1;
-            for (0..4) |i| { // _ = toks.next();
+            for (0..4) |i| {
                 prod *= @max(0, cur[i]);
             }
             break :blk prod;
         };
-        first.* = @max(first.*, value);
-        if (cur[4] == 500) {
-            second.* = @max(second.*, value);
+        if (value > 0) {
+            first.* = @max(first.*, value);
+            if (cur[4] == 500) {
+                second.* = @max(second.*, value);
+            }
         }
         return;
     }
     for (0..spoons + 1) |j| {
-        findMaxScore(ingredients, spoons - j, idx + 1, cur + scaleVec(ingredients[idx], @bitCast(j)), first, second);
+        findMaxScore(ingredients[1..], spoons - j, cur + scaleVec(ingredients[0], @bitCast(j)), first, second);
     }
 }
 

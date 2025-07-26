@@ -1,17 +1,15 @@
 const Processor = struct {
-    const NodeData = struct { char: u8, frq: u8 = 1 };
-    const List = std.DoublyLinkedList(NodeData);
+    const List = std.ArrayListUnmanaged([2]u8);
 
     str: []const u8,
-    list: ?List = null,
+    list0: ?List = null,
+    list1: List = List.empty,
 
     fn len(self: Processor) usize {
-        if (self.list) |list| {
+        if (self.list0) |list| {
             var res: usize = 0;
-            var node_op = list.first;
-            while (node_op) |node| {
-                res += 1 + digits(node.data.frq);
-                node_op = node.next;
+            for (list.items) |item| {
+                res += 1 + digits(item[1]);
             }
             return res;
         }
@@ -19,52 +17,36 @@ const Processor = struct {
     }
 
     fn next(self: *Processor, ac: std.mem.Allocator) !void {
-        if (self.list) |*old_list| {
-            var list = List{};
-            errdefer listDeinit(ac, &list);
+        if (self.list0) |*old_list| {
+            self.list1.clearRetainingCapacity();
+            errdefer self.list1.deinit(ac);
             var buffer: [10]u8 = undefined;
 
-            while (old_list.popFirst()) |node| {
-                try addToListFromString(ac, try std.fmt.bufPrint(&buffer, "{d}{d}", .{ node.data.frq, node.data.char }), &list);
-                ac.destroy(node);
+            for (old_list.items) |item| {
+                try addToListFromString(ac, try std.fmt.bufPrint(&buffer, "{d}{d}", .{ item[1], item[0] }), &self.list1);
             }
-
-            self.list = list;
+            std.mem.swap(List, &self.list1, old_list);
         } else {
-            var list = List{};
-            errdefer listDeinit(ac, &list);
-            try addToListFromString(ac, self.str, &list);
-            self.list = list;
+            self.list0 = List{};
+            errdefer self.list0.?.deinit(ac);
+            try addToListFromString(ac, self.str, &self.list0.?);
         }
-    }
-
-    fn reset(self: *Processor, ac: std.mem.Allocator) void {
-        if (self.list) |*list| {
-            listDeinit(ac, list);
-        }
-        self.list = null;
     }
 
     fn deinit(self: *Processor, ac: std.mem.Allocator) void {
-        self.reset(ac);
+        if (self.list0) |*list| {
+            list.deinit(ac);
+        }
+        self.list1.deinit(ac);
         self.* = undefined;
     }
 
     fn addToListFromString(ac: std.mem.Allocator, str: []const u8, list: *List) !void {
         for (str) |char| {
-            if (list.last == null or list.last.?.data.char != char - 48) {
-                const node = try ac.create(List.Node);
-                node.data = .{ .char = char - 48 };
-                list.append(node);
-            } else {
-                list.last.?.data.frq += 1;
+            if (list.items.len == 0 or list.getLast()[0] != char - 48) {
+                try list.append(ac, .{ char - 48, 0 });
             }
-        }
-    }
-
-    fn listDeinit(ac: std.mem.Allocator, list: *std.DoublyLinkedList(NodeData)) void {
-        while (list.pop()) |node| {
-            ac.destroy(node);
+            list.items[list.items.len - 1][1] += 1;
         }
     }
 

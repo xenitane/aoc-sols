@@ -1,11 +1,10 @@
 const Result = lib.Result(usize, usize);
+const RACE_DURATION = 2503;
 fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
     var res = Result{ .first = 0, .second = 0 };
 
     var deerInfoList = std.ArrayListUnmanaged([3]usize).empty;
     defer deerInfoList.deinit(ac);
-
-    const RACE_DURATION = 2503;
 
     var lines = std.mem.tokenizeScalar(u8, file_content, '\n');
     while (lines.next()) |line| {

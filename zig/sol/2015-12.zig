@@ -24,13 +24,13 @@ fn getSum(jsonVal: std.json.Value) V2 {
         },
         .object => |object| {
             var temp = V2{ 0, 0 };
-            var second = true;
+            var not_second = false;
             var itr = object.iterator();
             while (itr.next()) |kv| {
                 switch (kv.value_ptr.*) {
                     .string => |string| {
                         if (std.mem.eql(u8, string, "red")) {
-                            second = false;
+                            not_second = true;
                         }
                     },
                     else => {
@@ -38,7 +38,7 @@ fn getSum(jsonVal: std.json.Value) V2 {
                     },
                 }
             }
-            if (!second) temp[1] = 0;
+            if (not_second) temp[1] = 0;
             res += temp;
         },
         else => {},
