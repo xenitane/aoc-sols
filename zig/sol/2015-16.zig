@@ -34,7 +34,7 @@ fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
         var stat = Stat{};
         _, const id = .{ toks.next(), try std.fmt.parseInt(u32, toks.next().?, 10) };
         while (toks.next()) |name| {
-            inline for (@typeInfo(Stat).@"struct".fields) |field| {
+            inline for (std.meta.fields(Stat)) |field| {
                 if (std.mem.eql(u8, name, field.name)) {
                     @field(stat, field.name) = try std.fmt.parseInt(u32, toks.next().?, 10);
                     break;

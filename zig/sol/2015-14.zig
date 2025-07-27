@@ -49,35 +49,35 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
         leaders.clearRetainingCapacity();
         var max_dist: usize = 0;
         for (deerPosList.items, deerInfoList.items, 0..) |*pos, info, i| {
-            switch (pos.@"2") {
+            switch (pos[2]) {
                 .flight => |*val| {
-                    pos.@"1" += info[0];
+                    pos[1] += info[0];
                     val.* -= 1;
                     if (val.* == 0) {
-                        pos.@"2" = .{ .rest = info[2] };
+                        pos[2] = .{ .rest = info[2] };
                     }
                 },
                 .rest => |*val| {
                     val.* -= 1;
                     if (val.* == 0) {
-                        pos.@"2" = .{ .flight = info[1] };
+                        pos[2] = .{ .flight = info[1] };
                     }
                 },
             }
-            if (max_dist < pos.@"1") {
-                max_dist = pos.@"1";
+            if (max_dist < pos[1]) {
+                max_dist = pos[1];
                 leaders.clearRetainingCapacity();
             }
-            if (max_dist == pos.@"1") {
+            if (max_dist == pos[1]) {
                 leaders.appendAssumeCapacity(i);
             }
         }
         for (leaders.items) |i| {
-            deerPosList.items[i].@"0" += 1;
+            deerPosList.items[i][0] += 1;
         }
     }
     for (deerPosList.items) |pos| {
-        res.second = @max(res.second, pos.@"0");
+        res.second = @max(res.second, pos[0]);
     }
 
     return res;

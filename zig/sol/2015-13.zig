@@ -90,7 +90,7 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
 
     var perm: Perm = undefined;
 
-    inline for (@typeInfo(Result).@"struct".fields, 0..) |field, i| {
+    inline for (std.meta.fields(Result), 0..) |field, i| {
         perm = try Perm.init(ac, people + i);
         @field(res, field.name) = perm.calcHappiness(happiness);
         while (perm.next()) {

@@ -31,14 +31,14 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
             if (null == dp[i][j]) {
                 continue;
             }
-            ac.free(dp[i][j].?.@"1");
+            ac.free(dp[i][j].?[1]);
         }
     };
 
     try buildDP(ac, containers.items, dp, 0, 0);
 
-    res.first = dp[0][0].?.@"0";
-    for (dp[0][0].?.@"1") |val| {
+    res.first = dp[0][0].?[0];
+    for (dp[0][0].?[1]) |val| {
         if (val > 0) {
             res.second = val;
             break;
@@ -51,8 +51,8 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
 fn buildDP(ac: std.mem.Allocator, containers: []const u16, dp: []const []?DPCell, i: usize, j: usize) !void {
     if (j == EGGNOG_QTY) {
         dp[i][j] = .{ 1, try ac.alloc(u32, containers.len + 1) };
-        @memset(dp[i][j].?.@"1", 0);
-        dp[i][j].?.@"1"[0] = 1;
+        @memset(dp[i][j].?[1], 0);
+        dp[i][j].?[1][0] = 1;
         return;
     }
 
@@ -61,7 +61,7 @@ fn buildDP(ac: std.mem.Allocator, containers: []const u16, dp: []const []?DPCell
     }
 
     dp[i][j] = .{ 0, try ac.alloc(u32, containers.len + 1) };
-    @memset(dp[i][j].?.@"1", 0);
+    @memset(dp[i][j].?[1], 0);
 
     if (i == containers.len) {
         return;
@@ -72,8 +72,8 @@ fn buildDP(ac: std.mem.Allocator, containers: []const u16, dp: []const []?DPCell
     try buildDP(ac, containers, dp, i + 1, j);
     ddp = dp[i + 1][j].?;
 
-    dp[i][j].?.@"0" += ddp.@"0";
-    for (dp[i][j].?.@"1", ddp.@"1") |*src, val| {
+    dp[i][j].?[0] += ddp[0];
+    for (dp[i][j].?[1], ddp[1]) |*src, val| {
         src.* += val;
     }
 
@@ -84,8 +84,8 @@ fn buildDP(ac: std.mem.Allocator, containers: []const u16, dp: []const []?DPCell
     try buildDP(ac, containers, dp, i + 1, j + containers[i]);
     ddp = dp[i + 1][j + containers[i]].?;
 
-    dp[i][j].?.@"0" += ddp.@"0";
-    for (dp[i][j].?.@"1"[1..], ddp.@"1"[0..containers.len]) |*src, val| {
+    dp[i][j].?[0] += ddp[0];
+    for (dp[i][j].?[1][1..], ddp[1][0..containers.len]) |*src, val| {
         src.* += val;
     }
 }

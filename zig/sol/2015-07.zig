@@ -42,7 +42,8 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
         }
         const ivar1 = try makeVar(toks.next().?);
         _ = toks.next();
-        inline for (@typeInfo(Expression).@"union".fields) |field| {
+
+        inline for (std.meta.fields(Expression)) |field| {
             if (std.mem.eql(u8, field.name, op) and field.type == [2]Variable) {
                 try expressions.put(ac, toks.next().?, @unionInit(Expression, field.name, .{ ivar0, ivar1 }));
                 break;

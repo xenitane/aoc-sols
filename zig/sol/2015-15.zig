@@ -23,7 +23,7 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
         _ = toks.next();
         while (toks.next()) |name| {
             const qty = try std.fmt.parseInt(isize, toks.next().?, 10);
-            inline for (@typeInfo(IngredientStat).@"enum".fields) |field| {
+            inline for (std.meta.fields(IngredientStat)) |field| {
                 if (std.mem.eql(u8, field.name, name)) {
                     ingredient[field.value] = qty;
                     break;
