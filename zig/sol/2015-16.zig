@@ -13,7 +13,7 @@ const Stat = struct {
 
 const Result = lib.Result(usize, usize);
 fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
-    var res = Result{ .first = undefined, .second = 600 };
+    var res = Result{ .first = 0, .second = 0 };
 
     var lines = std.mem.tokenizeScalar(u8, file_content, '\n');
 

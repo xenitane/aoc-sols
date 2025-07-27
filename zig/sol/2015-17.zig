@@ -1,4 +1,4 @@
-const EGGNOG_QTY = 150;
+var EGGNOG_QTY: usize = 150;
 const Result = lib.Result(u32, u32);
 const DPCell = struct { u32, []u32 };
 fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
@@ -112,6 +112,7 @@ pub fn main() !void {
 }
 
 test solve {
+    EGGNOG_QTY = 25;
     const ally = std.testing.allocator;
 
     const in_file_content = try lib.util.readEntireFile(ally, opts.test_input_file_path);
