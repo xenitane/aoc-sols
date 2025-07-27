@@ -53,7 +53,7 @@ case $mode in
 new)
     touch {test_inputs,test_outputs}/$year-$day.txt
     if [[ ! -f inputs/${year}-${day}.txt && -f .cookie ]]; then
-        curl -sfLb "$(command cat .cookie)" https://adventofcode.com/${year}/day/${day}/input >inputs/${year}-${day}.txt
+        curl -sfLb "$(command cat .cookie)" https://adventofcode.com/${year}/day/${day}/input | sed -z '$ s/\n$//' >inputs/${year}-${day}.txt
     else
         touch inputs/$year-$day.txt
     fi
