@@ -49,19 +49,19 @@ const Processor = struct {
             list.items[list.items.len - 1][1] += 1;
         }
     }
-
-    inline fn digits(num: u8) u8 {
-        if (num == 0) {
-            @panic("0 not allowed");
-        }
-        inline for (.{ 100, 10, 1 }, .{ 3, 2, 1 }) |base, lg| {
-            if (num >= base) {
-                return lg;
-            }
-        }
-        @panic("unreachable");
-    }
 };
+
+inline fn digits(num: u8) u8 {
+    if (num == 0) {
+        @panic("0 not allowed");
+    }
+    inline for (.{ 100, 10, 1 }, .{ 3, 2, 1 }) |base, lg| {
+        if (num >= base) {
+            return lg;
+        }
+    }
+    @panic("unreachable");
+}
 
 const Result = lib.Result(usize, usize);
 fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {

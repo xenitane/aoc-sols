@@ -50,12 +50,12 @@ fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
             "akitas",      "vizslas",
             "cars",        "perfumes",
             "cats",        "trees",
-        }, [_]std.math.Order{
-            .lt, .lt,
-            .eq, .eq,
-            .eq, .eq,
-            .eq, .eq,
-            .gt, .gt,
+        }, .{
+            std.math.Order.lt, std.math.Order.lt,
+            std.math.Order.eq, std.math.Order.eq,
+            std.math.Order.eq, std.math.Order.eq,
+            std.math.Order.eq, std.math.Order.eq,
+            std.math.Order.gt, std.math.Order.gt,
         }) |field_name, ord| {
             if (@field(stat, field_name)) |val| {
                 const actual_val = @field(def, field_name).?;

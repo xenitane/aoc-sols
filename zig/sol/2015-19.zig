@@ -1,9 +1,3 @@
-const StringPair = struct {
-    fn lessThanFn(_: void, a: [2][]const u8, b: [2][]const u8) bool {
-        return (a[1].len > b[0].len);
-    }
-};
-
 const Result = lib.Result(usize, usize);
 fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
     var res = Result{ .first = 0, .second = 0 };

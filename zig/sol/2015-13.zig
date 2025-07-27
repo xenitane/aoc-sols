@@ -102,7 +102,7 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
     return res;
 }
 
-fn getHappinessDiff(sign: []const u8, diff: []const u8) !isize {
+inline fn getHappinessDiff(sign: []const u8, diff: []const u8) !isize {
     const hash = std.hash.Wyhash.hash;
     const val = try std.fmt.parseInt(isize, diff, 10);
     return switch (hash(0, sign)) {
