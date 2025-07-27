@@ -121,7 +121,7 @@ fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
     return res;
 }
 
-fn conductMatch(p0: PlayerStat, p1: PlayerStat) bool {
+inline fn conductMatch(p0: PlayerStat, p1: PlayerStat) bool {
     const p0_attack = @max(p0.Damage, p1.Armor + 1) - p1.Armor;
     const p0_moves = @divFloor((p1.@"Hit Points" + p0_attack - 1), p0_attack);
 

@@ -11,7 +11,7 @@ fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
         }
     }
     for (1..@divFloor(target + 10, 11) + 1) |idx| {
-        if ((sumFactorsWithQuotientAbove49(idx) * 11) >= target) {
+        if ((sumFactorsWithQuotientBelow51(idx) * 11) >= target) {
             res.second = idx;
             break;
         }
@@ -20,7 +20,7 @@ fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
     return res;
 }
 
-inline fn sumFactorsWithQuotientAbove49(num: usize) usize {
+inline fn sumFactorsWithQuotientBelow51(num: usize) usize {
     var res: usize = 0;
     for (1..51) |i| {
         if (num % i == 0) {
