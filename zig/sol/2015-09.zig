@@ -1,5 +1,3 @@
-const DistMap = std.AutoArrayHashMapUnmanaged([2]usize, usize);
-
 const Perm = struct {
     seq: []usize,
 
@@ -49,6 +47,8 @@ const Perm = struct {
         return res;
     }
 };
+
+const DistMap = std.AutoArrayHashMapUnmanaged([2]usize, usize);
 
 const Result = lib.Result(usize, usize);
 fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {

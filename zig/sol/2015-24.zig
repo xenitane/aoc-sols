@@ -84,7 +84,7 @@ fn seperatable(packages: []usize, idx: usize, weight: usize, target: usize) bool
     return false;
 }
 
-fn allSelected(packages: []const usize) bool {
+inline fn allSelected(packages: []const usize) bool {
     for (packages) |p| {
         if (p < SELECTED) {
             return false;

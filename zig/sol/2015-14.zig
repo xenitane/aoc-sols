@@ -1,5 +1,6 @@
-const Result = lib.Result(usize, usize);
 const RACE_DURATION = 2503;
+
+const Result = lib.Result(usize, usize);
 fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
     var res = Result{ .first = 0, .second = 0 };
 

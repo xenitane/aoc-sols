@@ -1,4 +1,5 @@
 const DIM = 1000;
+
 const Result = lib.Result(usize, usize);
 fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
     var res = Result{ .first = 0, .second = 0 };

@@ -1,6 +1,7 @@
 var EGGNOG_QTY: usize = 150;
-const Result = lib.Result(u32, u32);
 const DPCell = struct { u32, []u32 };
+
+const Result = lib.Result(u32, u32);
 fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
     var res = Result{ .first = 0, .second = 0 };
 

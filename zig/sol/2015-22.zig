@@ -46,14 +46,6 @@ const SpellExt = struct {
     spell: Spell,
 };
 
-const AVAILABLESPELLS = [_]SpellExt{
-    .{ .cost = 113, .spell = .{ .effect = .{ .timer = 6, .val = 7, .kind = .ARMOR } } },
-    .{ .cost = 173, .spell = .{ .effect = .{ .timer = 6, .val = 3, .kind = .DAMAGE } } },
-    .{ .cost = 229, .spell = .{ .effect = .{ .timer = 5, .val = 101, .kind = .MANA } } },
-    .{ .cost = 53, .spell = .{ .cast = .{ .damage = 4, .heal = 0 } } },
-    .{ .cost = 73, .spell = .{ .cast = .{ .damage = 2, .heal = 2 } } },
-};
-
 const Player = struct {
     @"hit points": u16 = 50,
     armor: u16 = 0,
@@ -63,6 +55,14 @@ const Player = struct {
     fn applyDamage(self: *Player, n: u16) void {
         self.@"hit points" -|= @max(n, self.armor + 1) - self.armor;
     }
+};
+
+const AVAILABLESPELLS = [_]SpellExt{
+    .{ .cost = 113, .spell = .{ .effect = .{ .timer = 6, .val = 7, .kind = .ARMOR } } },
+    .{ .cost = 173, .spell = .{ .effect = .{ .timer = 6, .val = 3, .kind = .DAMAGE } } },
+    .{ .cost = 229, .spell = .{ .effect = .{ .timer = 5, .val = 101, .kind = .MANA } } },
+    .{ .cost = 53, .spell = .{ .cast = .{ .damage = 4, .heal = 0 } } },
+    .{ .cost = 73, .spell = .{ .cast = .{ .damage = 2, .heal = 2 } } },
 };
 
 const Result = lib.Result(usize, usize);
@@ -85,17 +85,15 @@ fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
         break :blk boss;
     };
 
-    const player = Player{};
-
-    conductMatch(player, boss, true, .{ null, null, null }, 0, &res.first);
-    conductMatch1(player, boss, true, .{ null, null, null }, 0, &res.second);
+    conductMatch(Player{}, boss, true, .{ null, null, null }, 0, false, &res.first);
+    conductMatch(Player{}, boss, true, .{ null, null, null }, 0, true, &res.second);
 
     return res;
 }
 
-fn conductMatch1(player: Player, boss: Player, my_turn: bool, active_spells: [3]?Spell, spent: u16, res: *usize) void {
+fn conductMatch(player: Player, boss: Player, my_turn: bool, active_spells: [3]?Spell, spent: u16, hard: bool, res: *usize) void {
     var new_player = player;
-    if (my_turn) {
+    if (hard and my_turn) {
         new_player.applyDamage(1);
         if (new_player.@"hit points" == 0) {
             return;
@@ -120,49 +118,18 @@ fn conductMatch1(player: Player, boss: Player, my_turn: bool, active_spells: [3]
                 res.* = @min(res.*, new_spent);
                 continue;
             }
-            conductMatch1(new_player_0, new_boss_0, false, new_active_spells_0, new_spent, res);
+            conductMatch(new_player_0, new_boss_0, false, new_active_spells_0, new_spent, hard, res);
         }
     } else {
         new_player.applyDamage(new_boss.damage);
         if (new_player.@"hit points" == 0) {
             return;
         }
-        conductMatch1(new_player, new_boss, true, new_active_spells, spent, res);
+        conductMatch(new_player, new_boss, true, new_active_spells, spent, hard, res);
     }
 }
 
-fn conductMatch(player: Player, boss: Player, my_turn: bool, active_spells: [3]?Spell, spent: u16, res: *usize) void {
-    var new_player, const new_boss, const new_active_spells = applyEffect(player, boss, active_spells);
-    if (new_boss.@"hit points" == 0) {
-        res.* = @min(res.*, spent);
-        return;
-    }
-    if (my_turn) {
-        if (spent >= res.*) {
-            return;
-        }
-        for (0..AVAILABLESPELLS.len) |i| {
-            if ((i < 3 and null != new_active_spells[i]) or player.mana < AVAILABLESPELLS[i].cost) {
-                continue;
-            }
-            const new_player_0, const new_boss_0, const new_active_spells_0 = activateSpell(new_player, new_boss, i, new_active_spells);
-            const new_spent = spent + AVAILABLESPELLS[i].cost;
-            if (new_boss_0.@"hit points" == 0) {
-                res.* = @min(res.*, new_spent);
-                continue;
-            }
-            conductMatch(new_player_0, new_boss_0, false, new_active_spells_0, new_spent, res);
-        }
-    } else {
-        new_player.applyDamage(new_boss.damage);
-        if (new_player.@"hit points" == 0) {
-            return;
-        }
-        conductMatch(new_player, new_boss, true, new_active_spells, spent, res);
-    }
-}
-
-fn activateSpell(player: Player, boss: Player, spellIdx: usize, active_spells: [3]?Spell) struct { Player, Player, [3]?Spell } {
+inline fn activateSpell(player: Player, boss: Player, spellIdx: usize, active_spells: [3]?Spell) struct { Player, Player, [3]?Spell } {
     var new_player = player;
     var new_boss = boss;
     var new_active_spells = active_spells;
@@ -180,7 +147,7 @@ fn activateSpell(player: Player, boss: Player, spellIdx: usize, active_spells: [
     return .{ new_player, new_boss, new_active_spells };
 }
 
-fn applyEffect(player: Player, boss: Player, active_spells: [3]?Spell) struct { Player, Player, [3]?Spell } {
+inline fn applyEffect(player: Player, boss: Player, active_spells: [3]?Spell) struct { Player, Player, [3]?Spell } {
     var new_player = player;
     var new_boss = boss;
     var new_active_spells = active_spells;

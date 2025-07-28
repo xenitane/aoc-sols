@@ -1,6 +1,3 @@
-const HappinessMap = std.AutoArrayHashMapUnmanaged([2]usize, isize);
-const PeopleNameIdMap = std.StringArrayHashMapUnmanaged(usize);
-
 const Perm = struct {
     seq: []usize,
 
@@ -51,6 +48,9 @@ const Perm = struct {
         return res;
     }
 };
+
+const HappinessMap = std.AutoArrayHashMapUnmanaged([2]usize, isize);
+const PeopleNameIdMap = std.StringArrayHashMapUnmanaged(usize);
 
 const Result = lib.Result(isize, isize);
 fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
