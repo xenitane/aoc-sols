@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+mode=$1
+year=$2
+day=$3
+
+flags="-DYEAR=\"$year\" -DDAY=\"$day\""
+
+[[ -d "hs-out" ]] || mkdir -p "hs-out"
+
+case $mode in
+test) TEST_MODE=1 runghc -DYEAR=\"$year\" -DDAY=\"$day\" -i./sol/lib ./sol/${year}-${day}.hs ;;
+run) ghc -DYEAR=\"$year\" -DDAY=\"$day\" -i./sol/lib -O2 ./sol/${year}-${day}.hs -o ./hs-out/${year}-${day} && ./hs-out/${year}-${day} ;;
+*)
+    >&2 echo unreachable
+    exit 1
+    ;;
+esac

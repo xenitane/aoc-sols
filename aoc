@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 declare -rA lang_ext=(
+    ["haskell"]="hs"
     ["zig"]="zig"
 )
 
