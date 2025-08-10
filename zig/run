@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+mode=$1
+year=$2
+day=$3
+
+case $mode in
+test) zig build test-${year}-${day} ;;
+run) zig build -Drelease run-${year}-${day} ;;
+*)
+    >&2 echo unreachable
+    exit 1
+    ;;
+esac

@@ -16,6 +16,7 @@ aoc-sols/
 |- license.md
 |- readme.md
 |- <language>/
+|  |- run*
 |  |- sol/
 |  |  |- YYYY-DD.<ext>
 ```
@@ -32,13 +33,14 @@ aoc-sols/
 - A POSIX based operating system.
 - Language toolchains
 
-  | Language | Toolchain                                     |
-  | :------- | :-------------------------------------------- |
-  | zig      | [Zig compiler toolchain](https://ziglang.org) |
+  | Language | Toolchain                                                |
+  | :------- | :------------------------------------------------------- |
+  | haskell  | [Glasgow Haskell Compiler](https://www.haskell.org/ghc/) |
+  | zig      | [Zig compiler toolchain](https://ziglang.org)            |
 
 ## Usage Instructions
 
-- Run `chmod +x ./aoc` to make the **aoc** shell script executable.
+- Run `chmod +x ./aoc ./*/run` to make the runner scripts executable.
 - Run `./aoc help` to get the help message to guide you further.
 
 ## [MIT License](license.md)

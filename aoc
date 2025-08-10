@@ -1,8 +1,28 @@
 #!/usr/bin/env bash
 
+declare -rA lang_ext=(
+    ["zig"]="zig"
+)
+
+lang_list=()
+for lang in "${!lang_ext[@]}"; do
+    n_cur="${cur}${cur:+, }$lang"
+    if [[ ${#n_cur} -gt 20 ]]; then
+        lang_list+=("${cur},")
+        cur=$lang
+    else
+        cur=$n_cur
+    fi
+done
+lang_list+=("${cur}")
+
+unset lang cur n_cur
+
 function usage() {
     command cat <<USAGE >&2
-Usage: aoc [mode] [language] [year] [day]
+Usage:
+        aoc help # prints this help message
+        aoc [mode] [language] [year] [day]
 modes:
     new
         scaffolds an empty solution file from templates files
@@ -10,16 +30,19 @@ modes:
         run the solution on the actual input
     test
         run the solution on test input
+
 languages:
     the list of available languages:
-        zig
-year and day  in YYYY and DD format
+$(
+        for aa in "${lang_list[@]}"; do
+            printf "        %s\n" "$aa"
+        done
+    )
+
+notes:
+    - year and day must be in YYYY and DD format
 USAGE
 }
-
-declare -rA lang_ext=(
-    ["zig"]="zig"
-)
 
 if [[ $# -eq 1 && "$1" == "help" ]]; then
     >&2 usage
@@ -52,8 +75,8 @@ fi
 case $mode in
 new)
     touch {test_inputs,test_outputs}/$year-$day.txt
-    if [[ ! -f inputs/${year}-${day}.txt && -f .cookie ]]; then
-        curl -sfLb "$(command cat .cookie)" https://adventofcode.com/${year}/day/${day}/input | sed -z '$ s/\n$//' >inputs/${year}-${day}.txt
+    if [[ -f .cookie && ! -f inputs/${year}-${day}.txt ]]; then
+        curl -sfLb "$(command cat .cookie)" https://adventofcode.com/${year}/day/${day#0}/input | sed -z '$ s/\n$//' >inputs/${year}-${day}.txt
     else
         touch inputs/$year-$day.txt
     fi
@@ -70,13 +93,7 @@ test | run) ;;
     ;;
 esac
 
-case $language in
-zig)
-    cd zig
-    zig build $([[ $mode == "run" ]] && echo -Drelease) ${mode}-${year}-${day}
-    ;;
-*)
-    >&2 echo unreachable
-    exit 1
-    ;;
-esac
+cd $language
+./run $mode $year $day
+
+exit $?
