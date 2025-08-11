@@ -28,7 +28,7 @@ trimTrailing = reverse . dropWhile isSpace . reverse
 safeReadFile :: FilePath -> IO String
 safeReadFile path = do
     file_cont_ex <-
-        try $ evaluate $ readFile path :: IO (Either IOException (IO String))
+        (try . evaluate . readFile) path :: IO (Either IOException (IO String))
     case file_cont_ex of
         Left exc -> do
             putStrLn $ "Error:" ++ show exc ++ "wile reading file:" ++ path

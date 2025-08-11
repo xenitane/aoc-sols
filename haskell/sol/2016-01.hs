@@ -11,47 +11,51 @@ type Point = (Int, Int)
 solve :: String -> (Int, Int)
 solve input = (first, second)
   where
-    first = abs x + abs y
+    first = abs xp + abs yp
     second = abs xa + abs ya
-    ((x, y), Just (xa, ya), _, _) =
+    ((xp, yp), Just (xa, ya), _, _) =
         foldl
             rotateAndMove
-            ((0, 0), Nothing, (0, 1), Data.Set.empty :: Set Point)
+            ((0, 0), Nothing, (0, 1), Set.empty :: Set Point)
             moves
     moves = map strToMove $ words input
-    strToMove :: String -> (Bool, Int)
-    strToMove ('L':s) = (False, toInt s)
-    strToMove ('R':s) = (True, toInt s)
-    toInt :: String -> Int
-    toInt s = (read $ reverse . dropWhile (== ',') . reverse $ s) :: Int
-    rotateAndMove ::
-           (Point, Maybe Point, Point, Set Point)
-        -> (Bool, Int)
-        -> (Point, Maybe Point, Point, Set Point)
-    rotateAndMove a (dir, steps) = moveN steps $ rotate dir a
-    rotate ::
-           Bool
-        -> (Point, Maybe Point, Point, Set Point)
-        -> (Point, Maybe Point, Point, Set Point)
-    rotate True (pos, act, (dx, dy), mp) = (pos, act, (-dy, dx), mp)
-    rotate False (pos, act, (dx, dy), mp) = (pos, act, (dy, -dx), mp)
-    moveN ::
-           Int
-        -> (Point, Maybe Point, Point, Set Point)
-        -> (Point, Maybe Point, Point, Set Point)
-    moveN 0 a = a
-    moveN 1 ((x, y), act, (dx, dy), mp) =
-        ((x + dx, y + dy), newAct, (dx, dy), newMp)
-      where
-        newAct =
-            case act of
-                Just p -> act
-                _ ->
-                    if Data.Set.member (x + dx, y + dy) mp
-                        then Just (x + dx, y + dy)
-                        else Nothing
-        newMp = Data.Set.insert (x + dx, y + dy) mp
-    moveN x a = moveN (x - 1) $ moveN 1 a
+
+rotateAndMove ::
+       (Point, Maybe Point, Point, Set Point)
+    -> (Bool, Int)
+    -> (Point, Maybe Point, Point, Set Point)
+rotateAndMove a (dir, steps) = moveN steps $ rotate dir a
+
+rotate ::
+       Bool
+    -> (Point, Maybe Point, Point, Set Point)
+    -> (Point, Maybe Point, Point, Set Point)
+rotate True (pos, act, (dx, dy), mp) = (pos, act, (-dy, dx), mp)
+rotate False (pos, act, (dx, dy), mp) = (pos, act, (dy, -dx), mp)
+
+moveN ::
+       Int
+    -> (Point, Maybe Point, Point, Set Point)
+    -> (Point, Maybe Point, Point, Set Point)
+moveN 0 res = res
+moveN n ((x, y), act, (dx, dy), mp) =
+    moveN (n - 1) ((x + dx, y + dy), newAct, (dx, dy), newMp)
+  where
+    newAct =
+        case act of
+            Just p -> act
+            _ ->
+                if Set.member (x + dx, y + dy) mp
+                    then Just (x + dx, y + dy)
+                    else Nothing
+    newMp = Set.insert (x + dx, y + dy) mp
+
+strToMove :: String -> (Bool, Int)
+strToMove ('L':rest) = (False, toInt rest)
+strToMove ('R':rest) = (True, toInt rest)
+
+toInt :: String -> Int
+toInt str = (read . reverse . dropWhile (== ',') . reverse) str :: Int
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

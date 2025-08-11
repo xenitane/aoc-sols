@@ -8,20 +8,23 @@ import System.Exit (ExitCode(ExitFailure), exitWith)
 solve :: String -> (Int, Int)
 solve input = (first, second)
   where
-    first = length . filter id $ map isValidTriangle triangles1
-    second = length . filter id $ map isValidTriangle triangles2
+    first = (length . filter id . map isValidTriangle) triangles1
+    second = (length . filter id . map isValidTriangle) triangles2
     triangles1 =
-        map (sort . map (\len -> read len :: Int) . words) $ lines input
+        (map (sort . map (\len -> read len :: Int) . words) . lines) input
     triangles2 =
-        transform $ map (map (\len -> read len :: Int) . words) $ lines input
-    transform :: [[Int]] -> [[Int]]
-    transform [] = []
-    transform (a:b:c:r) = makeTriangles a b c ++ transform r
-    makeTriangles :: [Int] -> [Int] -> [Int] -> [[Int]]
-    makeTriangles [a, b, c] [d, e, f] [g, h, i] =
-        [sort [a, d, g], sort [b, e, h], sort [c, f, i]]
-    isValidTriangle :: [Int] -> Bool
-    isValidTriangle [a, b, c] = a + b > c
+        (transform . map (map (\len -> read len :: Int) . words) . lines) input
+
+transform :: [[Int]] -> [[Int]]
+transform [] = []
+transform (a:b:c:r) = makeTriangles a b c ++ transform r
+
+makeTriangles :: [Int] -> [Int] -> [Int] -> [[Int]]
+makeTriangles [a, b, c] [d, e, f] [g, h, i] =
+    [sort [a, d, g], sort [b, e, h], sort [c, f, i]]
+
+isValidTriangle :: [Int] -> Bool
+isValidTriangle [a, b, c] = a + b > c
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

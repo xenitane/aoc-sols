@@ -50,18 +50,20 @@ solve input = (first, second)
     first = foldl (reposition move1map) "" codes
     second = foldl (reposition move2map) "" codes
     codes = lines input
-    reposition :: Map Char String -> String -> String -> String
-    reposition moveMap "" code = [moveFromAccToCode moveMap '5' code]
-    reposition moveMap s code = s ++ [moveFromAccToCode moveMap (last s) code]
-    moveFromAccToCode :: Map Char String -> Char -> String -> Char
-    moveFromAccToCode _ c "" = c
-    moveFromAccToCode moveMap c (h:r) =
-        moveFromAccToCode moveMap (next moveMap (moveId h) c) r
-    next :: Map Char String -> Int -> Char -> Char
-    next mp k c = x
-      where
-        x = last $ take (k + 1) str
-        Just str = Data.Map.lookup c mp
+
+reposition :: Map Char String -> String -> String -> String
+reposition moveMap "" code = [moveFromAccToCode moveMap '5' code]
+reposition moveMap s code = s ++ [moveFromAccToCode moveMap (last s) code]
+
+moveFromAccToCode :: Map Char String -> Char -> String -> Char
+moveFromAccToCode _ c "" = c
+moveFromAccToCode moveMap c (h:r) =
+    moveFromAccToCode moveMap (next moveMap (moveId h) c) r
+
+next :: Map Char String -> Int -> Char -> Char
+next map idx key = (last . take (idx + 1)) str
+  where
+    Just str = Map.lookup key map
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
