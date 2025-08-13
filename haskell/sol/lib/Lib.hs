@@ -31,7 +31,10 @@ safeReadFile path = do
         (try . evaluate . readFile) path :: IO (Either IOException (IO String))
     case file_cont_ex of
         Left exc -> do
-            putStrLn $ "Error:" ++ show exc ++ "wile reading file:" ++ path
-            exitWith $ ExitFailure 1
+            putStrLn ("Error:" ++ show exc ++ "wile reading file:" ++ path)
+            exit 1
         Right textIO -> do
             textIO
+
+exit :: Int -> IO a
+exit = exitWith . ExitFailure

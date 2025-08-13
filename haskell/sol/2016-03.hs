@@ -1,30 +1,44 @@
 {-# LANGUAGE CPP #-}
 
 import Data.List (sort)
-import Lib (pairToStr, safeReadFile, trimTrailing)
+import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
 
-solve :: String -> (Int, Int)
-solve input = (first, second)
+type Pair a = (a, a)
+
+solve :: String -> String
+solve input = pairToStr (first, second)
   where
-    first = (length . filter id . map isValidTriangle) triangles1
-    second = (length . filter id . map isValidTriangle) triangles2
-    triangles1 =
-        (map (sort . map (\len -> read len :: Int) . words) . lines) input
-    triangles2 =
-        (transform . map (map (\len -> read len :: Int) . words) . lines) input
+    (first, second) =
+        (foldl (boths (\a b -> a + isValidTriangle b)) (0, 0) .
+         zz .
+         ((\x -> (x, transform x)) .
+          map (map (\len -> read len :: Int) . words) . lines))
+            input
+
+zz :: Pair [a] -> [Pair a]
+zz (a, b) = zip a b
+
+boths :: (a -> b -> c) -> Pair a -> Pair b -> Pair c
+boths f (a0, a1) (b0, b1) = (f a0 b0, f a1 b1)
 
 transform :: [[Int]] -> [[Int]]
 transform [] = []
-transform (a:b:c:r) = makeTriangles a b c ++ transform r
+transform triangles =
+    (makeTriangles . take 3) triangles ++ (transform . drop 3) triangles
 
-makeTriangles :: [Int] -> [Int] -> [Int] -> [[Int]]
-makeTriangles [a, b, c] [d, e, f] [g, h, i] =
-    [sort [a, d, g], sort [b, e, h], sort [c, f, i]]
+makeTriangles :: [[Int]] -> [[Int]]
+makeTriangles [[a, b, c], [d, e, f], [g, h, i]] =
+    [[a, d, g], [b, e, h], [c, f, i]]
 
-isValidTriangle :: [Int] -> Bool
-isValidTriangle [a, b, c] = a + b > c
+isValidTriangle :: [Int] -> Int
+isValidTriangle triangle =
+    if a + b > c
+        then 1
+        else 0
+  where
+    [a, b, c] = sort triangle
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
@@ -38,13 +52,14 @@ testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
 runNormalMode :: IO ()
 runNormalMode = do
     input <- safeReadFile inputFilePath
-    putStr $ pairToStr $ solve input
+    (putStr . solve) input
 
 runTestMode :: IO ()
 runTestMode = do
     input <- safeReadFile testInputFilePath
-    expected <- trimTrailing <$> safeReadFile testOutputFilePath
-    let actual = trimTrailing $ pairToStr $ solve input
+    expectedIO <- safeReadFile testOutputFilePath
+    let expected = trimTrailing expectedIO
+    let actual = (trimTrailing . solve) input
     if actual == expected
         then putStrLn "test passed"
         else do
@@ -57,7 +72,7 @@ runTestMode = do
             putStrLn "--------------"
             putStrLn actual
             putStrLn "--------------"
-            exitWith $ ExitFailure 1
+            exit 1
 
 main :: IO ()
 #if defined YEAR && defined DAY
@@ -69,5 +84,5 @@ main = do
 #else
 main = do
     putStrLn "essential variables not defined"
-    exitWith $ ExitFailure 1
+    exit 1
 #endif

@@ -1,27 +1,31 @@
 {-# LANGUAGE CPP #-}
 
+import Data.Char (isDigit)
 import Data.Set (Set, empty, insert, member)
 import qualified Data.Set as Set
-import Lib (pairToStr, safeReadFile, trimTrailing)
+import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
 
-type Point = (Int, Int)
+type Pair a = (a, a)
 
-solve :: String -> (Int, Int)
-solve input = (first, second)
+type Point = Pair Int
+
+solve :: String -> String
+solve input = pairToStr (first, second)
   where
     first = abs xp + abs yp
     second = abs xa + abs ya
     ((xp, yp), Just (xa, ya), _, _) =
-        foldl rotateAndMove ((0, 0), Nothing, (0, 1), Set.empty) moves
-    moves = map strToMove $ words input
+        (foldl rotateAndMove ((0, 0), Nothing, (0, 1), Set.empty) .
+         map strToMove . words)
+            input
 
 rotateAndMove ::
        (Point, Maybe Point, Point, Set Point)
     -> (Bool, Int)
     -> (Point, Maybe Point, Point, Set Point)
-rotateAndMove a (dir, steps) = moveN steps $ rotate dir a
+rotateAndMove res (dir, steps) = (moveN steps . rotate dir) res
 
 rotate ::
        Bool
@@ -36,23 +40,25 @@ moveN ::
     -> (Point, Maybe Point, Point, Set Point)
 moveN 0 res = res
 moveN n ((x, y), act, (dx, dy), mp) =
-    moveN (n - 1) ((x + dx, y + dy), newAct, (dx, dy), newMp)
+    moveN (n - 1) ((xx, yy), newAct, (dx, dy), newMp)
   where
     newAct =
         case act of
             Just p -> act
             _ ->
-                if Set.member (x + dx, y + dy) mp
-                    then Just (x + dx, y + dy)
+                if Set.member (xx, yy) mp
+                    then Just (xx, yy)
                     else Nothing
-    newMp = Set.insert (x + dx, y + dy) mp
+    newMp = Set.insert (xx, yy) mp
+    xx = x + dx
+    yy = y + dy
 
 strToMove :: String -> (Bool, Int)
 strToMove ('L':rest) = (False, toInt rest)
 strToMove ('R':rest) = (True, toInt rest)
 
 toInt :: String -> Int
-toInt str = (read . reverse . dropWhile (== ',') . reverse) str :: Int
+toInt str = (read . takeWhile isDigit) str :: Int
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
@@ -66,13 +72,14 @@ testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
 runNormalMode :: IO ()
 runNormalMode = do
     input <- safeReadFile inputFilePath
-    putStr $ pairToStr $ solve input
+    (putStr . solve) input
 
 runTestMode :: IO ()
 runTestMode = do
     input <- safeReadFile testInputFilePath
-    expected <- trimTrailing <$> safeReadFile testOutputFilePath
-    let actual = trimTrailing $ pairToStr $ solve input
+    expectedIO <- safeReadFile testOutputFilePath
+    let expected = trimTrailing expectedIO
+    let actual = (trimTrailing . solve) input
     if actual == expected
         then putStrLn "test passed"
         else do
@@ -85,7 +92,7 @@ runTestMode = do
             putStrLn "--------------"
             putStrLn actual
             putStrLn "--------------"
-            exitWith $ ExitFailure 1
+            exit 1
 
 main :: IO ()
 #if defined YEAR && defined DAY
@@ -97,5 +104,5 @@ main = do
 #else
 main = do
     putStrLn "essential variables not defined"
-    exitWith $ ExitFailure 1
+    exit 1
 #endif

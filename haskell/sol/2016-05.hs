@@ -3,39 +3,57 @@
 import Crypto.Hash (Digest, MD5(..), hashWith)
 import qualified Data.ByteString.Char8 as BS
 import Data.Char (isDigit, ord)
-import Data.Map (Map, empty, insertWith, lookup)
+import Data.Map (Map, elems, empty, insertWith, size)
 import qualified Data.Map as Map
-import Lib (pairToStr, safeReadFile, trimTrailing)
+import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
 
-solve :: String -> (String, String)
-solve input = (first, second)
+type Pair a = (a, a)
+
+desiredLen :: Int
+desiredLen = 8
+
+nc :: Char
+nc = '-'
+
+solve :: String -> String
+solve input = pairToStr (first, second)
   where
-    (first, _) = foldl (nextByte input) ("", 0) [0 .. 7]
-    second = genPass input Map.empty 0
+    first = genPass0 "" 0 input
+    second = genPass1 [nc | _ <- [1 .. desiredLen]] 0 input
 
-genPass :: String -> Map Int Char -> Int -> String
-genPass prefix passMap idx
-    | Map.size passMap == 8 = Map.elems passMap
-    | otherwise = genPass prefix newMap (idx + 1)
+genPass1 :: String -> Int -> String -> String
+genPass1 pass idx prefix
+    | nc `notElem` pass = pass
+    | otherwise = genPass1 newPass (idx + 1) prefix
   where
-    newMap =
-        case makeMD5Digest prefix idx of
-            ('0':'0':'0':'0':'0':ii:byte:_) ->
-                if isDigit ii && (ord ii < 56)
-                    then Map.insertWith (\_ a -> a) (ord ii - 48) byte passMap
-                    else passMap
-            _ -> passMap
+    newPass =
+        (if valid && kdx < desiredLen && pass !! kdx == nc
+             then setAt kdx b1
+             else id)
+            pass
+    valid = take 5 hash == "00000"
+    kdx = ord b0 - 48
+    [b0, b1] = drop 5 hash
+    hash = makeMD5Digest prefix idx
 
-nextByte :: String -> (String, Int) -> Int -> (String, Int)
-nextByte prefix (pass, idx) k =
-    case makeMD5Digest prefix idx of
-        ('0':'0':'0':'0':'0':byte:_) -> (pass ++ [byte], idx + 1)
-        _ -> nextByte prefix (pass, idx + 1) k
+genPass0 :: String -> Int -> String -> String
+genPass0 pass idx prefix
+    | length pass == desiredLen = pass
+    | otherwise = genPass0 newPass (idx + 1) prefix
+  where
+    newPass = pass ++ [b | length pass < desiredLen && valid]
+    [b, _] = drop 5 hash
+    valid = take 5 hash == "00000"
+    hash = makeMD5Digest prefix idx
 
+makeMD5Digest :: String -> Int -> String
 makeMD5Digest prefix idx =
     (take 7 . show . hashWith MD5 . BS.pack) (prefix ++ show idx)
+
+setAt :: Int -> a -> [a] -> [a]
+setAt idx val arr = take idx arr ++ [val] ++ drop (idx + 1) arr
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
@@ -49,13 +67,14 @@ testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
 runNormalMode :: IO ()
 runNormalMode = do
     input <- safeReadFile inputFilePath
-    putStr $ pairToStr $ solve input
+    (putStr . solve) input
 
 runTestMode :: IO ()
 runTestMode = do
     input <- safeReadFile testInputFilePath
-    expected <- trimTrailing <$> safeReadFile testOutputFilePath
-    let actual = trimTrailing $ pairToStr $ solve input
+    expectedIO <- safeReadFile testOutputFilePath
+    let expected = trimTrailing expectedIO
+    let actual = (trimTrailing . solve) input
     if actual == expected
         then putStrLn "test passed"
         else do
@@ -68,7 +87,7 @@ runTestMode = do
             putStrLn "--------------"
             putStrLn actual
             putStrLn "--------------"
-            exitWith $ ExitFailure 1
+            exit 1
 
 main :: IO ()
 #if defined YEAR && defined DAY
@@ -80,5 +99,5 @@ main = do
 #else
 main = do
     putStrLn "essential variables not defined"
-    exitWith $ ExitFailure 1
+    exit 1
 #endif

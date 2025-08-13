@@ -3,19 +3,21 @@
 import Data.List (sortBy)
 import Data.Map (Map, empty, toList)
 import qualified Data.Map as Map
-import Lib (pairToStr, safeReadFile, trimTrailing)
+import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
 
-solve :: String -> (String, String)
-solve input = (first, second)
+type Pair a = (a, a)
+
+solve :: String -> String
+solve input = pairToStr (first, second)
   where
     (first, second) =
         (foldl getMaxMin ("", "") .
          Map.elems . foldl mergeLines Map.empty . lines)
             input
 
-getMaxMin :: (String, String) -> Map Char Int -> (String, String)
+getMaxMin :: Pair String -> Map Char Int -> Pair String
 getMaxMin (a, b) indFrqMap = (a ++ [x], b ++ [y])
   where
     (x, _) = last items
@@ -49,13 +51,14 @@ testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
 runNormalMode :: IO ()
 runNormalMode = do
     input <- safeReadFile inputFilePath
-    putStr $ pairToStr $ solve input
+    (putStr . solve) input
 
 runTestMode :: IO ()
 runTestMode = do
     input <- safeReadFile testInputFilePath
-    expected <- trimTrailing <$> safeReadFile testOutputFilePath
-    let actual = trimTrailing $ pairToStr $ solve input
+    expectedIO <- safeReadFile testOutputFilePath
+    let expected = trimTrailing expectedIO
+    let actual = (trimTrailing . solve) input
     if actual == expected
         then putStrLn "test passed"
         else do
@@ -68,7 +71,7 @@ runTestMode = do
             putStrLn "--------------"
             putStrLn actual
             putStrLn "--------------"
-            exitWith $ ExitFailure 1
+            exit 1
 
 main :: IO ()
 #if defined YEAR && defined DAY
@@ -80,5 +83,5 @@ main = do
 #else
 main = do
     putStrLn "essential variables not defined"
-    exitWith $ ExitFailure 1
+    exit 1
 #endif
