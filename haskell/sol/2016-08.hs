@@ -14,7 +14,7 @@ matW = 50
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    first = (foldl (\p x -> p + (length . filter id) x) 0) mat
+    first = foldl (\p x -> p + (length . filter id) x) 0 mat
     second = (drop 1 . foldl (\p x -> p ++ "\n" ++ x) "" . map characterize) mat
     mat =
         (foldl applyInstruction ((replicate matH . replicate matW) False) .
@@ -24,7 +24,7 @@ solve input = pairToStr (first, second)
 characterize :: [Bool] -> String
 characterize [] = ""
 characterize row =
-    (concat . map boolToChar . take 5) row ++ " " ++ (characterize . drop 5) row
+    (concatMap boolToChar . take 5) row ++ " " ++ (characterize . drop 5) row
 
 boolToChar :: Bool -> String
 boolToChar x =
@@ -46,7 +46,9 @@ applyInstruction mat ins =
 
 rotateCol :: String -> [[Bool]] -> [[Bool]]
 rotateCol locQty mat =
-    (map (\(row, val) -> take idx row ++ [val] ++ drop (idx + 1) row) . zip mat)
+    zipWith
+        (\row val -> take idx row ++ [val] ++ drop (idx + 1) row)
+        mat
         (suffix ++ prefix)
   where
     prefix = (reverse . drop qty . reverse) col
@@ -66,7 +68,7 @@ rotateRow locQty mat = take idx mat ++ [suffix ++ prefix] ++ drop (idx + 1) mat
 
 activate :: String -> [[Bool]] -> [[Bool]]
 activate dim mat =
-    ((map (\row -> replicate x True ++ drop x row) . take y) mat) ++ drop y mat
+    (map (\row -> replicate x True ++ drop x row) . take y) mat ++ drop y mat
   where
     y = (read . drop 1 . dropWhile isDigit) dim :: Int
     x = (read . takeWhile isDigit) dim :: Int
