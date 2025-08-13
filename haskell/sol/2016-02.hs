@@ -61,9 +61,9 @@ moveFromAccToCode moveMap c (h:r) =
     moveFromAccToCode moveMap (next moveMap (moveId h) c) r
 
 next :: Map Char String -> Int -> Char -> Char
-next map idx key = (last . take (idx + 1)) str
+next moveMap idx key = (last . take (idx + 1)) str
   where
-    Just str = Map.lookup key map
+    Just str = Map.lookup key moveMap
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

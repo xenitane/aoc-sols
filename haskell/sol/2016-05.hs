@@ -12,21 +12,21 @@ import System.Exit (ExitCode(ExitFailure), exitWith)
 solve :: String -> (String, String)
 solve input = (first, second)
   where
-    (first, _) = foldl (nextByte input) ("", 0) [0..7]
+    (first, _) = foldl (nextByte input) ("", 0) [0 .. 7]
     second = genPass input (Map.empty :: Map Int Char) 0
 
 genPass :: String -> Map Int Char -> Int -> String
-genPass prefix map idx
-    | Map.size map == 8 = Map.elems map
+genPass prefix passMap idx
+    | Map.size passMap == 8 = Map.elems passMap
     | otherwise = genPass prefix newMap (idx + 1)
   where
     newMap =
         case makeMD5Digest prefix idx of
             ('0':'0':'0':'0':'0':ii:byte:_) ->
                 if isDigit ii && (ord ii < 56)
-                    then Map.insertWith (\_ a -> a) (ord ii - 48) byte map
-                    else map
-            _ -> map
+                    then Map.insertWith (\_ a -> a) (ord ii - 48) byte passMap
+                    else passMap
+            _ -> passMap
 
 nextByte :: String -> (String, Int) -> Int -> (String, Int)
 nextByte prefix (pass, idx) k =
