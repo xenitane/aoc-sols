@@ -1,7 +1,6 @@
 {-# LANGUAGE CPP #-}
 
 import Data.Char (chr, isDigit, ord)
-import Data.List (sort)
 import Data.Map (Map, elems, empty, insert, lookup)
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
@@ -19,8 +18,9 @@ solve input = (first, second)
         (foldl (\prev (_, sectorId, _) -> prev + sectorId) 0 .
          filter isValidRoom)
             rooms
-    ((_, second):_) =
-        (filter (\(key, _) -> key == "northpole-object-storage-") .
+    (_, second) =
+        (last .
+         filter (\(key, _) -> key == "northpole-object-storage-") .
          map (\(key, sectorId, _) -> (shiftCipher sectorId key, sectorId)))
             rooms
     rooms = map makeRoom $ lines input
@@ -43,11 +43,7 @@ isValidRoom (chars, _, checksum) = checksum == expectedChecksum
         (take (length checksum) .
          foldl (\str set -> str ++ Set.toAscList set) "" . reverse . Map.elems)
             frqMap
-    (_, frqMap) =
-        foldl
-            addCharToFrqMap
-            (Map.empty :: Map Char Int, Map.empty :: Map Int (Set Char))
-            chars
+    (_, frqMap) = foldl addCharToFrqMap (Map.empty, Map.empty) chars
 
 addCharToFrqMap ::
        (Map Char Int, Map Int (Set Char))
@@ -63,12 +59,12 @@ addCharToFrqMap (ma, mb) c
         Set.insert c $
         case Map.lookup (oldFrq + 1) mb of
             Just s -> s
-            Nothing -> Set.empty :: Set Char
+            Nothing -> Set.empty
     newSetOldF =
         Set.delete c $
         case Map.lookup oldFrq mb of
             Just s -> s
-            Nothing -> Set.empty :: Set Char
+            Nothing -> Set.empty
     oldFrq = Maybe.fromMaybe 0 $ Map.lookup c ma
 
 makeRoom :: String -> (String, Int, String)

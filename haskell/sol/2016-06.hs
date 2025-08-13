@@ -12,31 +12,30 @@ solve input = (first, second)
   where
     (first, second) =
         (foldl getMaxMin ("", "") .
-         Map.elems .
-         foldl mergeLines (Map.empty :: Map Int (Map Char Int)) . lines)
+         Map.elems . foldl mergeLines Map.empty . lines)
             input
 
 getMaxMin :: (String, String) -> Map Char Int -> (String, String)
 getMaxMin (a, b) indFrqMap = (a ++ [x], b ++ [y])
   where
     (x, _) = last items
-    (y, _) = (last . reverse) items
+    (y, _) = head items
     items =
-        sortBy (\(b0, f0) (b1, f1) -> compare (f0, b0) (f1, b1)) $
-        Map.toList indFrqMap
+        (sortBy (\(b0, f0) (b1, f1) -> compare (f0, b0) (f1, b1)) . Map.toList)
+            indFrqMap
 
 mergeLines :: Map Int (Map Char Int) -> String -> Map Int (Map Char Int)
 mergeLines frqMap = addChar frqMap 0
 
 addChar :: Map Int (Map Char Int) -> Int -> String -> Map Int (Map Char Int)
 addChar frqMap _ "" = frqMap
-addChar frqMap idx (h:rest) = addChar newMap (idx + 1) rest
+addChar frqMap idx (c:rest) = addChar newMap (idx + 1) rest
   where
     newMap = Map.insert idx newVal frqMap
     newVal =
         case Map.lookup idx frqMap of
-            Nothing -> Map.fromList [(h, 1)]
-            Just imap -> Map.insertWith (+) h 1 imap
+            Nothing -> Map.fromList [(c, 1)]
+            Just imap -> Map.insertWith (+) c 1 imap
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

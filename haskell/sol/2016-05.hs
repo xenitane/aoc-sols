@@ -13,7 +13,7 @@ solve :: String -> (String, String)
 solve input = (first, second)
   where
     (first, _) = foldl (nextByte input) ("", 0) [0 .. 7]
-    second = genPass input (Map.empty :: Map Int Char) 0
+    second = genPass input Map.empty 0
 
 genPass :: String -> Map Int Char -> Int -> String
 genPass prefix passMap idx
@@ -34,7 +34,8 @@ nextByte prefix (pass, idx) k =
         ('0':'0':'0':'0':'0':byte:_) -> (pass ++ [byte], idx + 1)
         _ -> nextByte prefix (pass, idx + 1) k
 
-makeMD5Digest prefix idx = show $ hashWith MD5 (BS.pack $ prefix ++ show idx)
+makeMD5Digest prefix idx =
+    (take 7 . show . hashWith MD5 . BS.pack) (prefix ++ show idx)
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

@@ -14,10 +14,7 @@ solve input = (first, second)
     first = abs xp + abs yp
     second = abs xa + abs ya
     ((xp, yp), Just (xa, ya), _, _) =
-        foldl
-            rotateAndMove
-            ((0, 0), Nothing, (0, 1), Set.empty :: Set Point)
-            moves
+        foldl rotateAndMove ((0, 0), Nothing, (0, 1), Set.empty) moves
     moves = map strToMove $ words input
 
 rotateAndMove ::
