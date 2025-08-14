@@ -43,7 +43,8 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
         res.first = possible_molecules.count();
     }
 
-    {
+    while (true) {
+        res.second = 0;
         const buffer0 = try ac.alloc(u8, given_molecule.len * 2);
         defer ac.free(buffer0);
         const buffer1 = try ac.alloc(u8, given_molecule.len * 2);
@@ -73,8 +74,8 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
                 res.second += 1;
             }
         }
-        if (!std.mem.eql(u8, "e", cur_molecule)) {
-            @panic("run again");
+        if (std.mem.eql(u8, "e", cur_molecule)) {
+            break;
         }
     }
 
