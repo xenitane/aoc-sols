@@ -21,8 +21,8 @@ decompress ('(':rest) nest =
     decompress (drop len rawRest) nest
   where
     rawRest = (drop 1 . dropWhile isDigit . drop 1 . dropWhile isDigit) rest
-    times = (read . takeWhile isDigit . drop 1 . dropWhile isDigit) rest :: Int
-    len = (read . takeWhile isDigit) rest :: Int
+    times = (read . takeWhile isDigit . drop 1 . dropWhile isDigit) rest
+    len = (read . takeWhile isDigit) rest
 decompress (h:rest) nest = 1 + decompress rest nest
 
 inputFilePath :: FilePath

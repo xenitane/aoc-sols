@@ -1,6 +1,14 @@
 {-# LANGUAGE CPP #-}
 
 import Data.Char (isDigit)
+import Data.List.Split
+    ( condense
+    , dropDelims
+    , dropFinalBlank
+    , dropInitBlank
+    , oneOf
+    , split
+    )
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
@@ -34,18 +42,20 @@ boolToChar x =
 
 applyInstruction :: [[Bool]] -> String -> [[Bool]]
 applyInstruction mat ins =
-    case takeWhile (/= ' ') ins of
+    case insKind of
         "rect" -> activate rest mat
         "rotate" ->
-            case takeWhile (/= ' ') rest of
-                "row" -> rotateRow nrest mat
-                "column" -> rotateCol nrest mat
+            case head rest of
+                "row" -> rotateRow (drop 1 rest) mat
+                "column" -> rotateCol (drop 1 rest) mat
   where
-    nrest = (drop 1 . dropWhile (/= '=')) rest
-    rest = (drop 1 . dropWhile (/= ' ')) ins
+    (insKind:rest) =
+        (split . dropInitBlank . dropFinalBlank . condense . dropDelims . oneOf)
+            " =xy"
+            ins
 
-rotateCol :: String -> [[Bool]] -> [[Bool]]
-rotateCol locQty mat =
+rotateCol :: [String] -> [[Bool]] -> [[Bool]]
+rotateCol [locStr, _, qtyStr] mat =
     zipWith
         (\row val -> take idx row ++ [val] ++ drop (idx + 1) row)
         mat
@@ -54,24 +64,25 @@ rotateCol locQty mat =
     prefix = (reverse . drop qty . reverse) col
     suffix = (reverse . take qty . reverse) col
     col = map (!! idx) mat
-    qty = ((read . drop 4 . dropWhile isDigit) locQty :: Int) `rem` matH
-    idx = (read . takeWhile isDigit) locQty :: Int
+    qty = rem (read qtyStr) matH
+    idx = read locStr
 
-rotateRow :: String -> [[Bool]] -> [[Bool]]
-rotateRow locQty mat = take idx mat ++ [suffix ++ prefix] ++ drop (idx + 1) mat
+rotateRow :: [String] -> [[Bool]] -> [[Bool]]
+rotateRow [locStr, _, qtyStr] mat =
+    take idx mat ++ [suffix ++ prefix] ++ drop (idx + 1) mat
   where
     prefix = (reverse . drop qty . reverse) row
     suffix = (reverse . take qty . reverse) row
     row = mat !! idx
-    qty = ((read . drop 4 . dropWhile isDigit) locQty :: Int) `rem` matW
-    idx = (read . takeWhile isDigit) locQty :: Int
+    qty = rem (read qtyStr) matW
+    idx = read locStr
 
-activate :: String -> [[Bool]] -> [[Bool]]
-activate dim mat =
+activate :: [String] -> [[Bool]] -> [[Bool]]
+activate [xs, ys] mat =
     (map (\row -> replicate x True ++ drop x row) . take y) mat ++ drop y mat
   where
-    y = (read . drop 1 . dropWhile isDigit) dim :: Int
-    x = (read . takeWhile isDigit) dim :: Int
+    y = read ys
+    x = read xs
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

@@ -12,9 +12,7 @@ solve input = pairToStr (first, second)
   where
     (first, second) =
         (foldl (boths (\a b -> a + isValidTriangle b)) (0, 0) .
-         zz .
-         ((\x -> (x, transform x)) .
-          map (map (\len -> read len :: Int) . words) . lines))
+         zz . ((\x -> (x, transform x)) . map (map read . words) . lines))
             input
 
 zz :: Pair [a] -> [Pair a]

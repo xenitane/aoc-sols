@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 
 import Data.Char (isDigit)
+import Data.List.Split (splitOn)
 import Data.Set (Set, empty, insert, member)
 import qualified Data.Set as Set
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
@@ -17,15 +18,14 @@ solve input = pairToStr (first, second)
     first = abs xp + abs yp
     second = abs xa + abs ya
     ((xp, yp), Just (xa, ya), _, _) =
-        (foldl rotateAndMove ((0, 0), Nothing, (0, 1), Set.empty) .
-         map strToMove . words)
+        (foldl rotateAndMove ((0, 0), Nothing, (0, 1), Set.empty) . splitOn ", ")
             input
 
 rotateAndMove ::
        (Point, Maybe Point, Point, Set Point)
-    -> (Bool, Int)
+    -> String
     -> (Point, Maybe Point, Point, Set Point)
-rotateAndMove res (dir, steps) = (moveN steps . rotate dir) res
+rotateAndMove res (dir:steps) = (moveN (read steps) . rotate (dir == 'L')) res
 
 rotate ::
        Bool
@@ -54,11 +54,7 @@ moveN n ((x, y), act, (dx, dy), mp) =
     yy = y + dy
 
 strToMove :: String -> (Bool, Int)
-strToMove ('L':rest) = (False, toInt rest)
-strToMove ('R':rest) = (True, toInt rest)
-
-toInt :: String -> Int
-toInt str = (read . takeWhile isDigit) str :: Int
+strToMove (h:rest) = (h == 'L', read rest)
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

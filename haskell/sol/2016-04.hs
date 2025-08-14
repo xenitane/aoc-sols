@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 
 import Data.Char (chr, isDigit, ord)
+import Data.List.Split (splitOneOf)
 import Data.Map (Map, elems, empty, insert, lookup)
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
@@ -14,21 +15,21 @@ import System.Exit (ExitCode(ExitFailure), exitWith)
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    first =
-        foldl
-            (\prev (key, sectorId, checksum) ->
-                 prev +
-                 if isValidRoom (key, sectorId, checksum)
-                     then sectorId
-                     else 0)
-            0
-            rooms
-    [(_, second, _)] =
-        filter
-            (\(key, sectorId, _) ->
-                 shiftCipher sectorId key == "northpole-object-storage-")
-            rooms
-    rooms = (map makeRoom . lines) input
+    (first, second) = (foldl roomMixup (0, 0) . lines) input
+
+roomMixup :: (Int, Int) -> String -> (Int, Int)
+roomMixup (validRoomSum, targetRoomSector) roomStr =
+    (validRoomSum + validatedRoomId, targetRoomSector + targetedRoomId)
+  where
+    targetedRoomId =
+        if shiftCipher sectorId key == "northpole-object-storage-"
+            then sectorId
+            else 0
+    validatedRoomId =
+        if isValidRoom key sectorId checksum
+            then sectorId
+            else 0
+    (key, sectorId, checksum) = makeRoom roomStr
 
 shiftCipher :: Int -> String -> String
 shiftCipher moves str
@@ -41,14 +42,14 @@ shiftChar moves '-'
     | otherwise = '-'
 shiftChar moves c = (chr . (\x -> 97 + (ord x + moves - 97) `rem` 26)) c
 
-isValidRoom :: (String, Int, String) -> Bool
-isValidRoom (chars, _, checksum) = checksum == expectedChecksum
+isValidRoom :: String -> Int -> String -> Bool
+isValidRoom key sectorId checksum = checksum == expectedChecksum
   where
     expectedChecksum =
         (take (length checksum) .
          foldl (\str set -> str ++ Set.toAscList set) "" . reverse . Map.elems)
             frqMap
-    (_, frqMap) = foldl addCharToFrqMap (Map.empty, Map.empty) chars
+    (_, frqMap) = foldl addCharToFrqMap (Map.empty, Map.empty) key
 
 addCharToFrqMap ::
        (Map Char Int, Map Int (Set Char))
@@ -69,10 +70,9 @@ addCharToFrqMap (ma, mb) c
 makeRoom :: String -> (String, Int, String)
 makeRoom roomStr = (chars, roomValue, checksum)
   where
-    checksum = (reverse . drop 1 . reverse . drop 1 . dropWhile isDigit) rest0
-    roomValue = (read . takeWhile isDigit) rest0 :: Int
-    rest0 = dropWhile (not . isDigit) roomStr
-    chars = takeWhile (not . isDigit) roomStr
+    roomValue = (read . takeWhile isDigit . dropWhile (not . isDigit)) rest
+    chars = takeWhile (not . isDigit) rest
+    [rest, checksum, _] = splitOneOf "[]" roomStr
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
