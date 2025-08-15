@@ -3,7 +3,7 @@
 import Crypto.Hash (Digest, MD5(..), hashWith)
 import qualified Data.ByteString.Char8 as BS
 import Data.Char (isDigit, ord)
-import Data.Map (Map, elems, empty, insertWith, size)
+import Data.Map (Map, empty, insertWith, size)
 import qualified Data.Map as Map
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)

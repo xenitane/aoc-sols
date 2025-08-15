@@ -1,14 +1,7 @@
 {-# LANGUAGE CPP #-}
 
 import Data.Char (isDigit)
-import Data.List.Split
-    ( condense
-    , dropDelims
-    , dropFinalBlank
-    , dropInitBlank
-    , oneOf
-    , split
-    )
+import Data.List.Split (condense, dropBlanks, dropDelims, oneOf, split)
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
@@ -50,9 +43,7 @@ applyInstruction mat ins =
                 "column" -> rotateCol (drop 1 rest) mat
   where
     (insKind:rest) =
-        (split . dropInitBlank . dropFinalBlank . condense . dropDelims . oneOf)
-            " =xy"
-            ins
+        (split . dropBlanks . condense . dropDelims . oneOf) " =xy" ins
 
 rotateCol :: [String] -> [[Bool]] -> [[Bool]]
 rotateCol [locStr, _, qtyStr] mat =

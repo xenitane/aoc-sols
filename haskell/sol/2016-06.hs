@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 
 import Data.List (sortBy)
-import Data.Map (Map, empty, toList)
+import Data.Map (Map, elems, empty, toList)
 import qualified Data.Map as Map
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
