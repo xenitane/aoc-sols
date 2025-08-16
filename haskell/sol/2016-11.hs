@@ -12,57 +12,82 @@ import System.Exit (ExitCode(ExitFailure), exitWith)
 type Pair a = (a, a)
 
 infinity :: Int
-infinity = 1000
+infinity = 9223372036854775807
 
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    first = (minimumSteps 0 Set.empty . Set.fromList) [(0, floors)]
+    first =
+        minimumSteps
+            0
+            (Set.empty, Set.fromList [(0, floors0)])
+            (Set.empty, Set.fromList [(length finalFloors0 - 1, finalFloors0)])
     second =
-        (minimumSteps 0 Set.empty . Set.fromList)
-            [ ( 0
-              , foldl
-                    (flip addToFloor)
-                    (head floors)
-                    [ Just (True, "elerium")
-                    , Just (False, "elerium")
-                    , Just (True, "dilithium")
-                    , Just (False, "dilithium")
-                    ] :
-                drop 1 floors)
-            ]
-    floors =
-        (map (makeFloor .
-              (split . dropBlanks . condense . dropDelims . oneOf) " .,") .
+        minimumSteps
+            0
+            (Set.empty, Set.fromList [(0, floors1)])
+            (Set.empty, Set.fromList [(length finalFloors1 - 1, finalFloors1)])
+    finalFloors1 =
+        replicate (length floors1 - 1) (Set.empty, Set.empty) ++
+        [ foldl
+              (\(p0, p1) (s0, s1) -> (Set.union p0 s0, Set.union p1 s1))
+              (Set.empty, Set.empty)
+              floors1
+        ]
+    floors1 =
+        foldl
+            (flip addToFloor)
+            (head floors0)
+            [ Just (True, Map.size elemIds)
+            , Just (False, Map.size elemIds)
+            , Just (True, Map.size elemIds + 1)
+            , Just (False, Map.size elemIds + 1)
+            ] :
+        drop 1 floors0
+    finalFloors0 =
+        replicate (length floors0 - 1) (Set.empty, Set.empty) ++
+        [ foldl
+              (\(p0, p1) (s0, s1) -> (Set.union p0 s0, Set.union p1 s1))
+              (Set.empty, Set.empty)
+              floors0
+        ]
+    (floors0, elemIds) =
+        (foldl
+             (\a b ->
+                  (makeFloors a .
+                   (split . dropBlanks . condense . dropDelims . oneOf) " .,")
+                      b)
+             ([], Map.empty) .
          lines)
             input
 
 minimumSteps ::
        Int
-    -> Set (Int, [Pair (Set String)])
-    -> Set (Int, [Pair (Set String)])
+    -> Pair (Set (Int, [Pair (Set Int)]))
+    -> Pair (Set (Int, [Pair (Set Int)]))
     -> Int
-minimumSteps depth seenStates curStates
-    | depth == infinity || null curStates = infinity
+minimumSteps depth (prev0, curr0) (prev1, curr1)
+    | null curr0 || null curr1 = infinity
+    | (not . null) (Set.intersection curr0 curr1) = depth
+    | (not . null) (Set.intersection curr0 prev1) = depth - 1
+    | (not . null) (Set.intersection curr1 prev0) = depth - 1
     | otherwise =
-        if (not . null) curStates &&
-           any
-               (\(x, arr) ->
-                    x + 1 == length arr &&
-                    (all (\(a, b) -> Set.null a && Set.null b) .
-                     drop 1 . reverse)
-                        arr)
-               curStates
-            then depth
-            else (minimumSteps (depth + 1) (Set.union seenStates curStates) .
-                  foldl (nextStatesAll seenStates) Set.empty . Set.toList)
-                     curStates
+        minimumSteps
+            (depth + 2)
+            (Set.union prev0 curr0, nextStatesFromSet prev0 curr0)
+            (Set.union prev1 curr1, nextStatesFromSet prev1 curr1)
+
+nextStatesFromSet ::
+       Set (Int, [Pair (Set Int)])
+    -> Set (Int, [Pair (Set Int)])
+    -> Set (Int, [Pair (Set Int)])
+nextStatesFromSet prevStates = Set.foldl (nextStatesAll prevStates) Set.empty
 
 nextStatesAll ::
-       Set (Int, [Pair (Set String)])
-    -> Set (Int, [Pair (Set String)])
-    -> (Int, [Pair (Set String)])
-    -> Set (Int, [Pair (Set String)])
+       Set (Int, [Pair (Set Int)])
+    -> Set (Int, [Pair (Set Int)])
+    -> (Int, [Pair (Set Int)])
+    -> Set (Int, [Pair (Set Int)])
 nextStatesAll seenStates collectedStates (curFloor, materialState) =
     (Set.union collectedStates .
      foldl
@@ -78,12 +103,12 @@ nextStatesAll seenStates collectedStates (curFloor, materialState) =
     currFloorState = materialState !! curFloor
 
 nextStateFromFloorAndTakable ::
-       Set (Int, [Pair (Set String)])
+       Set (Int, [Pair (Set Int)])
     -> Int
-    -> [Pair (Set String)]
-    -> Set (Int, [Pair (Set String)])
-    -> Pair (Maybe (Bool, String))
-    -> Set (Int, [Pair (Set String)])
+    -> [Pair (Set Int)]
+    -> Set (Int, [Pair (Set Int)])
+    -> Pair (Maybe (Bool, Int))
+    -> Set (Int, [Pair (Set Int)])
 nextStateFromFloorAndTakable seenStates currFloor materialState collectedNextStates (t0, t1) =
     if (not . isFloorValid) newMaterialsNow
         then collectedNextStates
@@ -116,38 +141,59 @@ nextStateFromFloorAndTakable seenStates currFloor materialState collectedNextSta
 setAt :: Int -> a -> [a] -> [a]
 setAt idx val arr = take idx arr ++ [val] ++ drop (idx + 1) arr
 
-addToFloor :: Maybe (Bool, String) -> Pair (Set String) -> Pair (Set String)
+addToFloor :: Ord a => Maybe (Bool, a) -> Pair (Set a) -> Pair (Set a)
 addToFloor Nothing floorState = floorState
 addToFloor (Just (isGen, name)) (gen, mc) =
     if isGen
         then (Set.insert name gen, mc)
         else (gen, Set.insert name mc)
 
-deleteFromFloor ::
-       Maybe (Bool, String) -> Pair (Set String) -> Pair (Set String)
+deleteFromFloor :: Ord a => Maybe (Bool, a) -> Pair (Set a) -> Pair (Set a)
 deleteFromFloor Nothing floorState = floorState
 deleteFromFloor (Just (isGen, name)) (gen, mc) =
     if isGen
         then (Set.delete name gen, mc)
         else (gen, Set.delete name mc)
 
-isFloorValid :: Pair (Set String) -> Bool
+isFloorValid :: Ord a => Pair (Set a) -> Bool
 isFloorValid (a, b) = Set.null a || Set.isSubsetOf b a
 
-makeFloor :: [String] -> Pair (Set String)
-makeFloor (_:_:_:_:"nothing":_) = (Set.empty, Set.empty)
-makeFloor (_:_:_:_:toks) = addGCs toks
+makeFloors ::
+       ([Pair (Set Int)], Map String Int)
+    -> [String]
+    -> ([Pair (Set Int)], Map String Int)
+makeFloors (arr, elemIds) toks = (arr ++ [floor], newElemIds)
+  where
+    (floor, newElemIds) = makeFloor elemIds toks
 
-addGCs :: [String] -> Pair (Set String)
-addGCs [] = (Set.empty, Set.empty)
-addGCs ("and":toks) = addGCs toks
-addGCs (_:elem:"generator":toks) = (Set.insert elem generators, microchips)
+makeFloor :: Map String Int -> [String] -> (Pair (Set Int), Map String Int)
+makeFloor elemIds (_:_:_:_:"nothing":_) = ((Set.empty, Set.empty), elemIds)
+makeFloor elemIds (_:_:_:_:toks) = addGCs elemIds toks
+
+addGCs :: Map String Int -> [String] -> (Pair (Set Int), Map String Int)
+addGCs elemIds [] = ((Set.empty, Set.empty), elemIds)
+addGCs elemIds ("and":toks) = addGCs elemIds toks
+addGCs elemIds (_:elem:"generator":toks) =
+    (addToFloor (Just (True, elemId)) floorState, newElemIds)
   where
-    (generators, microchips) = addGCs toks
-addGCs (_:elem:"microchip":toks) = (generators, Set.insert elemName microchips)
+    (elemId, newElemIds) =
+        case Map.lookup elem elemIdsTemp of
+            Just x -> (x, elemIdsTemp)
+            Nothing ->
+                ( Map.size elemIdsTemp
+                , Map.insert elem (Map.size elemIdsTemp) elemIdsTemp)
+    (floorState, elemIdsTemp) = addGCs elemIds toks
+addGCs elemIds (_:elem:"microchip":toks) =
+    (addToFloor (Just (False, elemId)) floorState, newElemIds)
   where
+    (elemId, newElemIds) =
+        case Map.lookup elemName elemIdsTemp of
+            Just x -> (x, elemIdsTemp)
+            Nothing ->
+                ( Map.size elemIdsTemp
+                , Map.insert elemName (Map.size elemIdsTemp) elemIdsTemp)
+    (floorState, elemIdsTemp) = addGCs elemIds toks
     elemName = takeWhile (/= '-') elem
-    (generators, microchips) = addGCs toks
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
