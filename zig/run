@@ -6,7 +6,7 @@ day=$3
 
 case $mode in
 test) zig build test-${year}-${day} ;;
-run) zig build -Drelease run-${year}-${day} ;;
+run) zig build -Drelease run-${year}-${day} | tee ../outputs/$year-$day.txt ;;
 *)
     >&2 echo unreachable
     exit 1
