@@ -15,9 +15,9 @@ type Point = Pair Int
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    first = abs xp + abs yp
-    second = abs xa + abs ya
-    ((xp, yp), Just (xa, ya), _, _) =
+    first = abs x + abs y
+    second = abs x' + abs y'
+    ((x, y), Just (x', y'), _, _) =
         (foldl rotateAndMove ((0, 0), Nothing, (0, 1), Set.empty) . splitOn ", ")
             input
 
@@ -40,18 +40,18 @@ moveN ::
     -> (Point, Maybe Point, Point, Set Point)
 moveN 0 res = res
 moveN n ((x, y), act, (dx, dy), mp) =
-    moveN (n - 1) ((xx, yy), newAct, (dx, dy), newMp)
+    moveN (n - 1) ((x', y'), act', (dx, dy), mp')
   where
-    newAct =
+    act' =
         case act of
             Just p -> act
             _ ->
-                if Set.member (xx, yy) mp
-                    then Just (xx, yy)
+                if Set.member (x', y') mp
+                    then Just (x', y')
                     else Nothing
-    newMp = Set.insert (xx, yy) mp
-    xx = x + dx
-    yy = y + dy
+    mp' = Set.insert (x', y') mp
+    x' = x + dx
+    y' = y + dy
 
 strToMove :: String -> (Bool, Int)
 strToMove (h:rest) = (h == 'L', read rest)

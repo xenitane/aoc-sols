@@ -3,6 +3,8 @@
 import Data.List (sortBy)
 import Data.Map (Map, elems, empty, toList)
 import qualified Data.Map as Map
+import Data.Maybe (fromMaybe)
+import qualified Data.Maybe as Maybe
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
@@ -18,12 +20,12 @@ solve input = pairToStr (first, second)
             input
 
 getMaxMin :: Pair String -> Map Char Int -> Pair String
-getMaxMin (a, b) indFrqMap = (a ++ [x], b ++ [y])
+getMaxMin (s, s') indFrqMap = (s ++ [c], s' ++ [c'])
   where
-    (x, _) = last items
-    (y, _) = head items
+    (c, _) = last items
+    (c', _) = head items
     items =
-        (sortBy (\(b0, f0) (b1, f1) -> compare (f0, b0) (f1, b1)) . Map.toList)
+        (sortBy (\(b, f) (b', f') -> compare (f, b) (f', b')) . Map.toList)
             indFrqMap
 
 mergeLines :: Map Int (Map Char Int) -> String -> Map Int (Map Char Int)
@@ -31,13 +33,15 @@ mergeLines frqMap = addChar frqMap 0
 
 addChar :: Map Int (Map Char Int) -> Int -> String -> Map Int (Map Char Int)
 addChar frqMap _ "" = frqMap
-addChar frqMap idx (c:rest) = addChar newMap (idx + 1) rest
-  where
-    newMap = Map.insert idx newVal frqMap
-    newVal =
-        case Map.lookup idx frqMap of
-            Nothing -> Map.fromList [(c, 1)]
-            Just imap -> Map.insertWith (+) c 1 imap
+addChar frqMap idx (c:rest) =
+    addChar
+        (Map.insertWith
+             (\_ -> Map.insertWith (+) c 1)
+             idx
+             (Map.singleton c 1)
+             frqMap)
+        (idx + 1)
+        rest
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

@@ -11,9 +11,9 @@ solve :: String -> String
 solve input = pairToStr (first, second)
   where
     (first, second) =
-        (foldl (\(p0, p1) ip -> (p0 + f0 ip, p1 + f1 ip)) (0, 0) . lines) input
-    f0 = boolToInt . supportsTLS False (False, True)
-    f1 = boolToInt . supportsSSL False (Set.empty, Set.empty)
+        (foldl (\(p, p') ip -> (p + f ip, p' + f' ip)) (0, 0) . lines) input
+    f = boolToInt . supportsTLS False False
+    f' = boolToInt . supportsSSL (Set.empty, Set.empty)
 
 boolToInt :: Bool -> Int
 boolToInt x =
@@ -21,40 +21,28 @@ boolToInt x =
         then 1
         else 0
 
-supportsSSL :: Bool -> (Set String, Set String) -> String -> Bool
-supportsSSL _ _ [_, _] = False
-supportsSSL False shmap ('[':rest) = supportsSSL True shmap rest
-supportsSSL True shmap (']':rest) = supportsSSL False shmap rest
-supportsSSL False (supernetMap, hypernetMap) (b0:b1:b2:rest) =
+supportsSSL :: (Set String, Set String) -> String -> Bool
+supportsSSL _ [_, _] = False
+supportsSSL (s, s') ('[':rest) = supportsSSL (s', s) rest
+supportsSSL (s, s') (']':rest) = supportsSSL (s', s) rest
+supportsSSL (s, s') (b0:b1:b2:rest) =
     if b0 == b2 && b0 /= b1
-        then Set.member [b1, b0, b1] hypernetMap ||
-             supportsSSL
-                 False
-                 (Set.insert [b0, b1, b2] supernetMap, hypernetMap)
-                 (b1 : b2 : rest)
-        else supportsSSL False (supernetMap, hypernetMap) (b1 : b2 : rest)
-supportsSSL True (supernetMap, hypernetMap) (b0:b1:b2:rest) =
-    if b0 == b2 && b0 /= b1
-        then Set.member [b1, b0, b1] supernetMap ||
-             supportsSSL
-                 True
-                 (supernetMap, Set.insert [b0, b1, b2] hypernetMap)
-                 (b1 : b2 : rest)
-        else supportsSSL True (supernetMap, hypernetMap) (b1 : b2 : rest)
+        then Set.member [b1, b0, b1] s' ||
+             supportsSSL (Set.insert [b0, b1, b2] s, s') (b1 : b2 : rest)
+        else supportsSSL (s, s') (b1 : b2 : rest)
 
-supportsTLS :: Bool -> (Bool, Bool) -> String -> Bool
-supportsTLS _ (_, False) _ = False
-supportsTLS _ (supernet, hypernet) [_, _, _] = supernet && hypernet
+supportsTLS :: Bool -> Bool -> String -> Bool
+supportsTLS _ supernet [_, _, _] = supernet
 supportsTLS False shnet ('[':rest) = supportsTLS True shnet rest
 supportsTLS True shnet (']':rest) = supportsTLS False shnet rest
-supportsTLS False (supernet, hypernet) (b0:b1:b2:b3:rest) =
-    supportsTLS False (supernet || abba, hypernet) (b1 : b2 : b3 : rest)
-  where
-    abba = b0 == b3 && b0 /= b1 && b1 == b2
-supportsTLS True (supernet, hypernet) (b0:b1:b2:b3:rest) =
-    supportsTLS True (supernet, hypernet && notAbba) (b1 : b2 : b3 : rest)
-  where
-    notAbba = b0 /= b3 || b0 == b1 || b1 /= b2
+supportsTLS False supernet (b0:b1:b2:b3:rest) =
+    supportsTLS
+        False
+        (supernet || (b0 == b3 && b0 /= b1 && b1 == b2))
+        (b1 : b2 : b3 : rest)
+supportsTLS True supernet (b0:b1:b2:b3:rest) =
+    (b0 /= b3 || b0 == b1 || b1 /= b2) &&
+    supportsTLS True supernet (b1 : b2 : b3 : rest)
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

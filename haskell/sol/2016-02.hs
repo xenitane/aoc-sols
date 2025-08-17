@@ -59,7 +59,7 @@ reposition :: Pair (Map Char String) -> Pair String -> String -> Pair String
 reposition moveMaps ("", "") =
     both (: []) . moveFromAccToCode moveMaps ('5', '5')
 reposition moveMaps s =
-    boths (\a b -> a ++ [b]) s . moveFromAccToCode moveMaps (both last s)
+    boths (\a -> (a ++) . (: [])) s . moveFromAccToCode moveMaps (both last s)
 
 moveFromAccToCode :: Pair (Map Char String) -> Pair Char -> String -> Pair Char
 moveFromAccToCode _ c "" = c
@@ -73,7 +73,7 @@ next mms idx keys =
         (boths Map.lookup keys mms)
 
 boths :: (a -> b -> c) -> Pair a -> Pair b -> Pair c
-boths f (a0, a1) (b0, b1) = (f a0 b0, f a1 b1)
+boths f (a, b) (a', b') = (f a a', f b b')
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

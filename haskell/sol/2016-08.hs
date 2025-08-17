@@ -15,8 +15,8 @@ matW = 50
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    first = foldl (\p x -> p + (length . filter id) x) 0 mat
-    second = (drop 1 . foldl (\p x -> p ++ "\n" ++ x) "" . map characterize) mat
+    first = foldl (\p -> (+ p) . (length . filter id)) 0 mat
+    second = (drop 1 . foldl (\p -> ((p ++ "\n") ++)) "" . map characterize) mat
     mat =
         (foldl applyInstruction ((replicate matH . replicate matW) False) .
          lines)
@@ -48,7 +48,7 @@ applyInstruction mat ins =
 rotateCol :: [String] -> [[Bool]] -> [[Bool]]
 rotateCol [locStr, _, qtyStr] mat =
     zipWith
-        (\row val -> take idx row ++ [val] ++ drop (idx + 1) row)
+        (\row -> (++ drop (idx + 1) row) . (take idx row ++) . (: []))
         mat
         (suffix ++ prefix)
   where
@@ -69,11 +69,11 @@ rotateRow [locStr, _, qtyStr] mat =
     idx = read locStr
 
 activate :: [String] -> [[Bool]] -> [[Bool]]
-activate [xs, ys] mat =
-    (map (\row -> replicate x True ++ drop x row) . take y) mat ++ drop y mat
+activate [ws, hs] mat =
+    (map ((replicate w True ++) . drop w) . take h) mat ++ drop h mat
   where
-    y = read ys
-    x = read xs
+    w = read ws
+    h = read hs
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

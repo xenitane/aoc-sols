@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 
 import Data.Char (isLower, ord)
+import Data.Tuple.Extra (both)
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
@@ -18,16 +19,20 @@ data Instruction
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    first = (head . runInstruction 0 [0, 0, 0, 0]) instructions
-    second = (head . runInstruction 0 [0, 0, 1, 0]) instructions
+    (first, second) =
+        both
+            (head .
+             flip (runInstruction 0) instructions .
+             ([0, 0] ++) . (++ [0]) . (: []))
+            (0, 1)
     instructions = (map (makeInstruction . words) . lines) input
 
 runInstruction :: Int -> [Int] -> [Instruction] -> [Int]
 runInstruction idx state instructions
     | idx >= length instructions = state
-    | otherwise = runInstruction newIdx newState instructions
+    | otherwise = runInstruction idx' state' instructions
   where
-    (newIdx, newState) =
+    (idx', state') =
         case instructions !! idx of
             IInc reg -> (idx + 1, incAt reg state)
             IDec reg -> (idx + 1, decAt reg state)

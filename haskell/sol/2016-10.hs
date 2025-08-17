@@ -12,6 +12,8 @@ import Data.Map
     , toList
     )
 import qualified Data.Map as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
@@ -24,81 +26,72 @@ desiredChips = (17, 61)
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    first = findProcessorBot desiredChips Map.empty instructions
+    first = findProcessorBot desiredChips Map.empty instructionsAndState
     second =
-        (Map.foldlWithKey
-             (\p k v ->
-                  p *
-                  if k < 3
-                      then head v
-                      else 1)
+        (Map.foldrWithKey
+             (\k v ->
+                  (* if k < 3
+                         then (head . Set.elems) v
+                         else 1))
              1 .
          computefinalOutputs Map.empty)
-            instructions
-    instructions =
+            instructionsAndState
+    instructionsAndState =
         (foldl makeInstructionsAndState (Map.empty, Map.empty) . lines) input
 
 computefinalOutputs ::
-       Map Int [Int]
-    -> (Map Int (Pair (Bool, Int)), Map Int [Int])
-    -> Map Int [Int]
+       Map Int (Set Int)
+    -> (Map Int (Pair (Bool, Int)), Map Int (Set Int))
+    -> Map Int (Set Int)
 computefinalOutputs outputs (instructions, state) =
-    if b < 0
-        then o
-        else computefinalOutputs o (instructions, s)
+    if botId < 0
+        then outputs'
+        else computefinalOutputs outputs' (instructions, state')
   where
-    (b, _, (o, s)) = doInstruction desiredChips instructions (outputs, state)
+    (botId, _, (outputs', state')) = doInstruction instructions (outputs, state)
 
 findProcessorBot ::
        Pair Int
-    -> Map Int [Int]
-    -> (Map Int (Pair (Bool, Int)), Map Int [Int])
+    -> Map Int (Set Int)
+    -> (Map Int (Pair (Bool, Int)), Map Int (Set Int))
     -> Int
 findProcessorBot dc outputs (instructions, state) =
     if c == dc
         then botId
-        else findProcessorBot dc newO (instructions, newS)
+        else findProcessorBot dc outputs' (instructions, state')
   where
-    (botId, c, (newO, newS)) = doInstruction dc instructions (outputs, state)
+    (botId, c, (outputs', state')) = doInstruction instructions (outputs, state)
 
 doInstruction ::
-       Pair Int
-    -> Map Int (Pair (Bool, Int))
-    -> Pair (Map Int [Int])
-    -> (Int, Pair Int, Pair (Map Int [Int]))
-doInstruction dc instructions (outputs, state) = (botId, c, (o, s))
+       Map Int (Pair (Bool, Int))
+    -> Pair (Map Int (Set Int))
+    -> (Int, Pair Int, Pair (Map Int (Set Int)))
+doInstruction instructions (outputs, state) =
+    case (Map.toList . Map.filter ((== 2) . Set.size)) state of
+        ((botId, chips):_) -> (botId, (chip, chip'), (outputs', state'))
+            where (outputs', state') =
+                      (moveChip kindTarget' chip' . moveChip kindTarget chip)
+                          (outputs, Map.delete botId state)
+                  Just (kindTarget, kindTarget') = Map.lookup botId instructions
+                  [chip, chip'] = Set.elems chips
+        [] -> (-1, (0, 0), (outputs, state))
+
+moveChip ::
+       (Bool, Int)
+    -> Int
+    -> Pair (Map Int (Set Int))
+    -> Pair (Map Int (Set Int))
+moveChip (kind, target) chip (outputs, state) =
+    if kind
+        then (addChip outputs, state)
+        else (outputs, addChip state)
   where
-    (botId, c, o, s) =
-        case botState of
-            ((b, [c0, c1]):_) -> (b, (c0, c1), o1, s1)
-                where (o1, s1) =
-                          if k1
-                              then (Map.insertWith (++) t1 [c1] o0, s0)
-                              else ( o0
-                                   , Map.insertWith
-                                         (\new old -> sort (old ++ new))
-                                         t1
-                                         [c1]
-                                         s0)
-                      (o0, s0) =
-                          if k0
-                              then ( Map.insertWith (++) t0 [c0] outputs
-                                   , newState)
-                              else ( outputs
-                                   , Map.insertWith
-                                         (\new old -> sort (old ++ new))
-                                         t0
-                                         [c0]
-                                         newState)
-                      Just ((k0, t0), (k1, t1)) = Map.lookup botId instructions
-                      newState = Map.delete botId state
-            [] -> (-1, dc, outputs, state)
-    botState = (filter (\(_, chips) -> length chips == 2) . Map.toList) state
+    addChip = Map.insertWith Set.union target (Set.singleton chip)
 
 makeInstructionsAndState ::
-       (Map Int (Pair (Bool, Int)), Map Int [Int])
+       (Map Int (Pair (Bool, Int)), Map Int (Set Int))
     -> String
-    -> (Map Int (Pair (Bool, Int)), Map Int [Int])
+    -> (Map Int (Pair (Bool, Int)), Map Int (Set Int))
 makeInstructionsAndState (instructions, state) command =
     case kind of
         "value" -> (instructions, addStateValue state rest)
@@ -108,21 +101,22 @@ makeInstructionsAndState (instructions, state) command =
 
 addInstruction ::
        Map Int (Pair (Bool, Int)) -> [String] -> Map Int (Pair (Bool, Int))
-addInstruction instructions [botStr, _, _, _, k0Str, t0Str, _, _, _, k1Str, t1Str] =
-    Map.insert botId ((k0, t0), (k1, t1)) instructions
+addInstruction instructions [botStr, _, _, _, kStr, tStr, _, _, _, kStr', tStr'] =
+    Map.insert botId ((k, t), (k', t')) instructions
   where
     botId = read botStr
-    k0 = k0Str == "output"
-    t0 = read t0Str
-    k1 = k1Str == "output"
-    t1 = read t1Str
+    k = kStr == "output"
+    t = read tStr
+    k' = kStr' == "output"
+    t' = read tStr'
 
-addStateValue :: Map Int [Int] -> [String] -> Map Int [Int]
+addStateValue :: Map Int (Set Int) -> [String] -> Map Int (Set Int)
 addStateValue state [chipStr, _, _, _, botStr] =
-    Map.insertWith (\new old -> sort (old ++ new)) botId [chipId] state
-  where
-    botId = read botStr :: Int
-    chipId = read chipStr :: Int
+    Map.insertWith
+        Set.union
+        (read botStr)
+        ((Set.singleton . read) chipStr)
+        state
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

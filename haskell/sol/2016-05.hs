@@ -26,9 +26,9 @@ solve input = pairToStr (first, second)
 genPass1 :: String -> Int -> String -> String
 genPass1 pass idx prefix
     | nc `notElem` pass = pass
-    | otherwise = genPass1 newPass (idx + 1) prefix
+    | otherwise = genPass1 pass' (idx + 1) prefix
   where
-    newPass =
+    pass' =
         (if valid && kdx < desiredLen && pass !! kdx == nc
              then setAt kdx b1
              else id)
@@ -41,9 +41,9 @@ genPass1 pass idx prefix
 genPass0 :: String -> Int -> String -> String
 genPass0 pass idx prefix
     | length pass == desiredLen = pass
-    | otherwise = genPass0 newPass (idx + 1) prefix
+    | otherwise = genPass0 pass' (idx + 1) prefix
   where
-    newPass = pass ++ [b | length pass < desiredLen && valid]
+    pass' = pass ++ [b | length pass < desiredLen && valid]
     [b, _] = drop 5 hash
     valid = take 5 hash == "00000"
     hash = makeMD5Digest prefix idx

@@ -9,21 +9,22 @@ import System.Exit (ExitCode(ExitFailure), exitWith)
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    (first, second) = both (decompress input) (False, True)
+    (first, second) = decompress input
 
-decompress :: String -> Bool -> Int
-decompress "" _ = 0
-decompress ('(':rest) nest =
-    times *
-    (if nest
-         then decompress (take len rawRest) True
-         else len) +
-    decompress (drop len rawRest) nest
+decompress :: String -> (Int, Int)
+decompress "" = (0, 0)
+decompress ('(':rest) =
+    (boths (+) (both (* times) (len, (snd . decompress . take len) rawRest)) .
+     decompress)
+        (drop len rawRest)
   where
-    rawRest = (drop 1 . dropWhile isDigit . drop 1 . dropWhile isDigit) rest
+    rawRest = (drop 1 . dropWhile (/= ')')) rest
     times = (read . takeWhile isDigit . drop 1 . dropWhile isDigit) rest
     len = (read . takeWhile isDigit) rest
-decompress (h:rest) nest = 1 + decompress rest nest
+decompress (h:rest) = (both succ . decompress) rest
+
+boths :: (a -> b -> c) -> (a, a) -> (b, b) -> (c, c)
+boths f (a, a') (b, b') = (f a b, f a' b')
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

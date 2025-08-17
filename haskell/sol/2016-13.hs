@@ -14,16 +14,25 @@ type Point = Pair Int
 infinity :: Int
 infinity = 9223372036854775807
 
+startPoint :: Point
+startPoint = (1, 1)
+
+targetPoint :: Point
+targetPoint = (31, 39)
+
+numItr :: Int
+numItr = 50
+
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
     first =
-        minimumSteps
-            shift
-            0
-            (Set.empty, Set.fromList [(1, 1)])
-            (Set.empty, Set.fromList [(31, 39)])
-    second = (countReachableInSteps shift 50 Set.empty . Set.fromList) [(1, 1)]
+        (minimumSteps shift 0 (Set.empty, Set.singleton startPoint) .
+         (Set.empty, ) . Set.singleton)
+            targetPoint
+    second =
+        (countReachableInSteps shift numItr Set.empty . Set.singleton)
+            startPoint
     shift = read input
 
 countReachableInSteps :: Int -> Int -> Set Point -> Set Point -> Int
@@ -42,7 +51,6 @@ minimumSteps shift depth (prev0, curr0) (prev1, curr1)
     | null curr0 || null curr1 = infinity
     | (not . null) (Set.intersection curr0 curr1) = depth
     | (not . null) (Set.intersection curr0 prev1) = depth - 1
-    | (not . null) (Set.intersection curr1 prev0) = depth - 1
     | otherwise =
         minimumSteps
             shift

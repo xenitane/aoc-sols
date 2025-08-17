@@ -12,6 +12,9 @@ import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
 
+targetKeyStr :: String
+targetKeyStr = "northpole-object-storage-"
+
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
@@ -22,7 +25,7 @@ roomMixup (validRoomSum, targetRoomSector) roomStr =
     (validRoomSum + validatedRoomId, targetRoomSector + targetedRoomId)
   where
     targetedRoomId =
-        if shiftCipher sectorId key == "northpole-object-storage-"
+        if shiftCipher sectorId key == targetKeyStr
             then sectorId
             else 0
     validatedRoomId =
@@ -33,21 +36,19 @@ roomMixup (validRoomSum, targetRoomSector) roomStr =
 
 shiftCipher :: Int -> String -> String
 shiftCipher moves str
-    | moves >= 26 = shiftCipher (moves `rem` 26) str
+    | moves >= 26 = shiftCipher (rem moves 26) str
     | otherwise = map (shiftChar moves) str
 
 shiftChar :: Int -> Char -> Char
-shiftChar moves '-'
-    | (moves `rem` 2) == 1 = ' '
-    | otherwise = '-'
-shiftChar moves c = (chr . (\x -> 97 + (ord x + moves - 97) `rem` 26)) c
+shiftChar moves c
+    | c == '-' = "- " !! rem moves 2
+    | otherwise = (chr . (+ 97) . (`rem` 26) . (+ (moves - 97)) . ord) c
 
 isValidRoom :: String -> Int -> String -> Bool
 isValidRoom key sectorId checksum = checksum == expectedChecksum
   where
     expectedChecksum =
-        (take (length checksum) .
-         foldl (\str set -> str ++ Set.toAscList set) "" . reverse . Map.elems)
+        (take (length checksum) . Map.foldr (\set -> (++ Set.elems set)) "")
             frqMap
     (_, frqMap) = foldl addCharToFrqMap (Map.empty, Map.empty) key
 
@@ -55,24 +56,25 @@ addCharToFrqMap ::
        (Map Char Int, Map Int (Set Char))
     -> Char
     -> (Map Char Int, Map Int (Set Char))
-addCharToFrqMap (ma, mb) c
-    | c == '-' = (ma, mb)
-    | otherwise = (nma, nmb)
+addCharToFrqMap (charCount, charByCount) c
+    | c == '-' = (charCount, charByCount)
+    | otherwise = (charCount', charByCount')
   where
-    nma = Map.insert c (oldFrq + 1) ma
-    nmb = (Map.insert oldFrq newSetOldF . Map.insert (oldFrq + 1) newSetNewF) mb
-    newSetNewF =
-        (Set.insert c . Maybe.fromMaybe Set.empty . Map.lookup (oldFrq + 1)) mb
-    newSetOldF =
-        (Set.delete c . Maybe.fromMaybe Set.empty . Map.lookup oldFrq) mb
-    oldFrq = (Maybe.fromMaybe 0 . Map.lookup c) ma
+    charCount' = Map.insert c (charFrq + 1) charCount
+    charByCount' =
+        (Map.insertWith Set.union (charFrq + 1) (Set.singleton c) .
+         (if charFrq == 0
+              then id
+              else Map.adjust (Set.delete c) charFrq))
+            charByCount
+    charFrq = (Maybe.fromMaybe 0 . Map.lookup c) charCount
 
 makeRoom :: String -> (String, Int, String)
 makeRoom roomStr = (chars, roomValue, checksum)
   where
-    roomValue = (read . takeWhile isDigit . dropWhile (not . isDigit)) rest
-    chars = takeWhile (not . isDigit) rest
-    [rest, checksum, _] = splitOneOf "[]" roomStr
+    roomValue = (read . takeWhile isDigit . dropWhile (not . isDigit)) roomStr'
+    chars = takeWhile (not . isDigit) roomStr'
+    [roomStr', checksum, _] = splitOneOf "[]" roomStr
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

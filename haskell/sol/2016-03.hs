@@ -11,7 +11,7 @@ solve :: String -> String
 solve input = pairToStr (first, second)
   where
     (first, second) =
-        (foldl (boths (\a b -> a + isValidTriangle b)) (0, 0) .
+        (foldl (boths (\a -> (+ a) . isValidTriangle)) (0, 0) .
          zz . ((\x -> (x, transform x)) . map (map read . words) . lines))
             input
 
@@ -19,16 +19,16 @@ zz :: Pair [a] -> [Pair a]
 zz (a, b) = zip a b
 
 boths :: (a -> b -> c) -> Pair a -> Pair b -> Pair c
-boths f (a0, a1) (b0, b1) = (f a0 b0, f a1 b1)
+boths f (a, a') (b, b') = (f a b, f a' b')
 
 transform :: [[Int]] -> [[Int]]
 transform [] = []
 transform triangles =
-    (makeTriangles . take 3) triangles ++ (transform . drop 3) triangles
+    (transpose . take 3) triangles ++ (transform . drop 3) triangles
 
-makeTriangles :: [[Int]] -> [[Int]]
-makeTriangles [[a, b, c], [d, e, f], [g, h, i]] =
-    [[a, d, g], [b, e, h], [c, f, i]]
+transpose :: [[Int]] -> [[Int]]
+transpose [[a0, b0, c0], [a1, b1, c1], [a2, b2, c2]] =
+    [[a0, a1, a2], [b0, b1, b2], [c0, c1, c2]]
 
 isValidTriangle :: [Int] -> Int
 isValidTriangle triangle =
