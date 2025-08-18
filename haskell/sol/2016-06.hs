@@ -20,13 +20,13 @@ solve input = pairToStr (first, second)
             input
 
 getMaxMin :: Pair String -> Map Char Int -> Pair String
-getMaxMin (s, s') indFrqMap = (s ++ [c], s' ++ [c'])
-  where
-    (c, _) = last items
-    (c', _) = head items
-    items =
-        (sortBy (\(b, f) (b', f') -> compare (f, b) (f', b')) . Map.toList)
-            indFrqMap
+getMaxMin (s, s') indFrqMap =
+    let pFlip (a, b) = (b, a)
+        comparator a a' = compare (pFlip a) (pFlip a')
+        items = (sortBy comparator . Map.toList) indFrqMap
+        (c, _) = last items
+        (c', _) = head items
+     in (s ++ [c], s' ++ [c'])
 
 mergeLines :: Map Int (Map Char Int) -> String -> Map Int (Map Char Int)
 mergeLines frqMap = addChar frqMap 0
@@ -34,14 +34,9 @@ mergeLines frqMap = addChar frqMap 0
 addChar :: Map Int (Map Char Int) -> Int -> String -> Map Int (Map Char Int)
 addChar frqMap _ "" = frqMap
 addChar frqMap idx (c:rest) =
-    addChar
-        (Map.insertWith
-             (\_ -> Map.insertWith (+) c 1)
-             idx
-             (Map.singleton c 1)
-             frqMap)
-        (idx + 1)
-        rest
+    let frqMap' =
+            Map.insertWith (Map.unionWith (+)) idx (Map.singleton c 1) frqMap
+     in addChar frqMap' (idx + 1) rest
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

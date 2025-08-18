@@ -14,11 +14,11 @@ solve input = pairToStr (first, second)
 decompress :: String -> (Int, Int)
 decompress "" = (0, 0)
 decompress ('(':rest) =
-    (boths (+) (both (* times) (len, (snd . decompress . take len) rawRest)) .
-     decompress)
-        (drop len rawRest)
+    let rawRest = (drop 1 . dropWhile (/= ')')) rest
+     in (boths (+) (both (* times) (len, (snd . decompress . take len) rawRest)) .
+         decompress)
+            (drop len rawRest)
   where
-    rawRest = (drop 1 . dropWhile (/= ')')) rest
     times = (read . takeWhile isDigit . drop 1 . dropWhile isDigit) rest
     len = (read . takeWhile isDigit) rest
 decompress (h:rest) = (both succ . decompress) rest

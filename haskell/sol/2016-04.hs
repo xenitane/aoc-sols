@@ -48,9 +48,9 @@ isValidRoom :: String -> Int -> String -> Bool
 isValidRoom key sectorId checksum = checksum == expectedChecksum
   where
     expectedChecksum =
-        (take (length checksum) . Map.foldr (\set -> (++ Set.elems set)) "")
-            frqMap
-    (_, frqMap) = foldl addCharToFrqMap (Map.empty, Map.empty) key
+        let (_, frqMap) = foldl addCharToFrqMap (Map.empty, Map.empty) key
+            joinFunc s = (++ Set.elems s)
+         in (take (length checksum) . Map.foldr joinFunc "") frqMap
 
 addCharToFrqMap ::
        (Map Char Int, Map Int (Set Char))
@@ -70,11 +70,12 @@ addCharToFrqMap (charCount, charByCount) c
     charFrq = (Maybe.fromMaybe 0 . Map.lookup c) charCount
 
 makeRoom :: String -> (String, Int, String)
-makeRoom roomStr = (chars, roomValue, checksum)
-  where
-    roomValue = (read . takeWhile isDigit . dropWhile (not . isDigit)) roomStr'
-    chars = takeWhile (not . isDigit) roomStr'
-    [roomStr', checksum, _] = splitOneOf "[]" roomStr
+makeRoom roomStr =
+    let roomValue =
+            (read . takeWhile isDigit . dropWhile (not . isDigit)) roomStr'
+        chars = takeWhile (not . isDigit) roomStr'
+        [roomStr', checksum, _] = splitOneOf "[]" roomStr
+     in (chars, roomValue, checksum)
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

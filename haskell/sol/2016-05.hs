@@ -29,24 +29,24 @@ genPass1 pass idx prefix
     | otherwise = genPass1 pass' (idx + 1) prefix
   where
     pass' =
-        (if valid && kdx < desiredLen && pass !! kdx == nc
-             then setAt kdx b1
-             else id)
-            pass
-    valid = take 5 hash == "00000"
-    kdx = ord b0 - 48
-    [b0, b1] = drop 5 hash
-    hash = makeMD5Digest prefix idx
+        let hash = makeMD5Digest prefix idx
+            valid = take 5 hash == "00000"
+            [b0, b1] = drop 5 hash
+            kdx = ord b0 - 48
+         in (if valid && kdx < desiredLen && pass !! kdx == nc
+                 then setAt kdx b1
+                 else id)
+                pass
 
 genPass0 :: String -> Int -> String -> String
 genPass0 pass idx prefix
     | length pass == desiredLen = pass
     | otherwise = genPass0 pass' (idx + 1) prefix
   where
-    pass' = pass ++ [b | length pass < desiredLen && valid]
-    [b, _] = drop 5 hash
-    valid = take 5 hash == "00000"
-    hash = makeMD5Digest prefix idx
+    pass' =
+        let valid = take 5 hash == "00000"
+            hash = makeMD5Digest prefix idx
+         in pass ++ [hash !! 5 | length pass < desiredLen && valid]
 
 makeMD5Digest :: String -> Int -> String
 makeMD5Digest prefix idx =

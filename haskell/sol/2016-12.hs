@@ -20,12 +20,12 @@ solve :: String -> String
 solve input = pairToStr (first, second)
   where
     (first, second) =
-        both
-            (head .
-             flip (runInstruction 0) instructions .
-             ([0, 0] ++) . (++ [0]) . (: []))
-            (0, 1)
-    instructions = (map (makeInstruction . words) . lines) input
+        let instructions = (map (makeInstruction . words) . lines) input
+         in both
+                (head .
+                 flip (runInstruction 0) instructions .
+                 ([0, 0] ++) . (++ [0]) . (: []))
+                (0, 1)
 
 runInstruction :: Int -> [Int] -> [Instruction] -> [Int]
 runInstruction idx state instructions
@@ -37,12 +37,11 @@ runInstruction idx state instructions
             IInc reg -> (idx + 1, incAt reg state)
             IDec reg -> (idx + 1, decAt reg state)
             IJnz (val, offset) ->
-                ( idx +
-                  if unwrapVal state val /= 0
-                      then offset
-                      else 1
-                , state)
-            ICpy (val, reg) -> (idx + 1, setAt reg (unwrapVal state val) state)
+                let uval = unwrapVal state val
+                 in (idx + (head . ([1 | uval == 0] ++)) [offset], state)
+            ICpy (val, reg) ->
+                let uval = unwrapVal state val
+                 in (idx + 1, setAt reg uval state)
 
 unwrapVal :: [Int] -> Val -> Int
 unwrapVal _ (VRaw v) = v
@@ -60,21 +59,20 @@ setAt i v arr = take i arr ++ [v] ++ drop (i + 1) arr
 zerrr :: Int
 zerrr = ord 'a'
 
+wrapVal val =
+    if (isLower . head) val
+        then VReg ((ord . head) val - zerrr)
+        else VRaw (read val)
+
 makeInstruction :: [String] -> Instruction
-makeInstruction ["cpy", val, [target]] = ICpy (vVal, ord target - zerrr)
-  where
-    vVal =
-        if (isLower . head) val
-            then VReg ((ord . head) val - zerrr)
-            else VRaw (read val)
+makeInstruction ["cpy", val, [target]] =
+    let vVal = wrapVal val
+     in ICpy (vVal, ord target - zerrr)
 makeInstruction ["inc", [target]] = IInc (ord target - zerrr)
 makeInstruction ["dec", [target]] = IDec (ord target - zerrr)
-makeInstruction ["jnz", val, offset] = IJnz (vVal, read offset)
-  where
-    vVal =
-        if (isLower . head) val
-            then VReg ((ord . head) val - zerrr)
-            else VRaw (read val)
+makeInstruction ["jnz", val, offset] =
+    let vVal = wrapVal val
+     in IJnz (vVal, read offset)
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

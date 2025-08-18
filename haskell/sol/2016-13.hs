@@ -64,15 +64,10 @@ nextStatesFromSet shift prevStates =
 
 nextStatesAll :: Int -> Set Point -> Set Point -> Point -> Set Point
 nextStatesAll shift seenPoints collectedPoints (x, y) =
-    (Set.union collectedPoints .
-     foldl
-         (\s (nx, ny) ->
-              if isPointOpenWithShift shift (nx, ny) &&
-                 (not . Set.member (nx, ny)) seenPoints
-                  then Set.insert (nx, ny) s
-                  else s)
-         Set.empty)
-        [(x, y + 1), (x + 1, y), (x, y - 1), (x - 1, y)]
+    let surrounds = [(x, y + 1), (x + 1, y), (x, y - 1), (x - 1, y)]
+        shouldStep p =
+            isPointOpenWithShift shift p && not (Set.member p seenPoints)
+     in (Set.union collectedPoints . Set.fromList . filter shouldStep) surrounds
 
 isPointOpenWithShift :: Int -> Point -> Bool
 isPointOpenWithShift shift (x, y) =

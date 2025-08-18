@@ -11,9 +11,10 @@ solve :: String -> String
 solve input = pairToStr (first, second)
   where
     (first, second) =
-        (foldl (\(p, p') ip -> (p + f ip, p' + f' ip)) (0, 0) . lines) input
-    f = boolToInt . supportsTLS False False
-    f' = boolToInt . supportsSSL (Set.empty, Set.empty)
+        let f = boolToInt . supportsTLS False False
+            f' = boolToInt . supportsSSL (Set.empty, Set.empty)
+            g (a, a') b = (a + f b, a' + f' b)
+         in (foldl g (0, 0) . lines) input
 
 boolToInt :: Bool -> Int
 boolToInt x =
@@ -25,24 +26,25 @@ supportsSSL :: (Set String, Set String) -> String -> Bool
 supportsSSL _ [_, _] = False
 supportsSSL (s, s') ('[':rest) = supportsSSL (s', s) rest
 supportsSSL (s, s') (']':rest) = supportsSSL (s', s) rest
-supportsSSL (s, s') (b0:b1:b2:rest) =
-    if b0 == b2 && b0 /= b1
-        then Set.member [b1, b0, b1] s' ||
-             supportsSSL (Set.insert [b0, b1, b2] s, s') (b1 : b2 : rest)
-        else supportsSSL (s, s') (b1 : b2 : rest)
+supportsSSL (s, s') str =
+    let [b0, b1, b2] = take 3 str
+        str' = drop 1 str
+     in if b0 == b2 && b0 /= b1
+            then Set.member [b1, b0, b1] s' ||
+                 supportsSSL (Set.insert [b0, b1, b2] s, s') str'
+            else supportsSSL (s, s') str'
 
 supportsTLS :: Bool -> Bool -> String -> Bool
 supportsTLS _ supernet [_, _, _] = supernet
 supportsTLS False shnet ('[':rest) = supportsTLS True shnet rest
 supportsTLS True shnet (']':rest) = supportsTLS False shnet rest
-supportsTLS False supernet (b0:b1:b2:b3:rest) =
-    supportsTLS
-        False
-        (supernet || (b0 == b3 && b0 /= b1 && b1 == b2))
-        (b1 : b2 : b3 : rest)
-supportsTLS True supernet (b0:b1:b2:b3:rest) =
-    (b0 /= b3 || b0 == b1 || b1 /= b2) &&
-    supportsTLS True supernet (b1 : b2 : b3 : rest)
+supportsTLS net supernet str =
+    let [b0, b1, b2, b3] = take 4 str
+        str' = drop 1 str
+        abba = b0 == b3 && b0 /= b1 && b1 == b2
+     in if net
+            then not abba && supportsTLS True supernet str'
+            else supportsTLS False (supernet || abba) str'
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"

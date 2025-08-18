@@ -59,7 +59,8 @@ reposition :: Pair (Map Char String) -> Pair String -> String -> Pair String
 reposition moveMaps ("", "") =
     both (: []) . moveFromAccToCode moveMaps ('5', '5')
 reposition moveMaps s =
-    boths (\a -> (a ++) . (: [])) s . moveFromAccToCode moveMaps (both last s)
+    let append a = (a ++) . (: [])
+     in boths append s . moveFromAccToCode moveMaps (both last s)
 
 moveFromAccToCode :: Pair (Map Char String) -> Pair Char -> String -> Pair Char
 moveFromAccToCode _ c "" = c

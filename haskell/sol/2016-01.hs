@@ -40,18 +40,16 @@ moveN ::
     -> (Point, Maybe Point, Point, Set Point)
 moveN 0 res = res
 moveN n ((x, y), act, (dx, dy), mp) =
-    moveN (n - 1) ((x', y'), act', (dx, dy), mp')
-  where
-    act' =
-        case act of
-            Just p -> act
-            _ ->
-                if Set.member (x', y') mp
-                    then Just (x', y')
-                    else Nothing
-    mp' = Set.insert (x', y') mp
-    x' = x + dx
-    y' = y + dy
+    let x' = x + dx
+        y' = y + dy
+        mp' = Set.insert (x', y') mp
+        act' =
+            case act of
+                Just p -> act
+                _
+                    | Set.member (x', y') mp -> Just (x', y')
+                _ -> Nothing
+     in moveN (n - 1) ((x', y'), act', (dx, dy), mp')
 
 strToMove :: String -> (Bool, Int)
 strToMove (h:rest) = (h == 'L', read rest)

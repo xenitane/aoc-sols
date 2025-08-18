@@ -6,6 +6,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Tuple.Extra (both)
 import Lib (exit, pairToStr, safeReadFile, trimTrailing)
 import System.Environment (lookupEnv)
 import System.Exit (ExitCode(ExitFailure), exitWith)
@@ -28,25 +29,21 @@ solve input = pairToStr (first, second)
             0
             (Set.empty, Set.singleton (0, floors1))
             (Set.empty, Set.singleton (length finalFloors1 - 1, finalFloors1))
-    finalFloors1 =
-        replicate (length floors1 - 1) (Set.empty, Set.empty) ++
-        [foldl (boths Set.union) (Set.empty, Set.empty) floors1]
+    (finalFloors0, finalFloors1) =
+        let mergeFloors floors =
+                replicate (length floors - 1) (Set.empty, Set.empty) ++
+                [foldl (boths Set.union) (Set.empty, Set.empty) floors]
+         in both mergeFloors (floors0, floors1)
     floors1 =
         (foldl (flip addToFloor) (head floors0) .
          concatMap (\x -> map (Just . (, x)) [True, False]))
             [Map.size elemIds, Map.size elemIds + 1] :
         drop 1 floors0
-    finalFloors0 =
-        replicate (length floors0 - 1) (Set.empty, Set.empty) ++
-        [foldl (boths Set.union) (Set.empty, Set.empty) floors0]
     (floors0, elemIds) =
-        (foldl
-             (\a ->
-                  makeFloors a .
-                  (split . dropBlanks . condense . dropDelims . oneOf) " .,")
-             ([], Map.empty) .
-         lines)
-            input
+        let splitter =
+                (split . dropBlanks . condense . dropDelims . oneOf) " .,"
+            accFunc a = makeFloors a . splitter
+         in (foldl accFunc ([], Map.empty) . lines) input
 
 boths :: (a -> b -> c) -> Pair a -> Pair b -> Pair c
 boths f (a, a') (b, b') = (f a b, f a' b')
@@ -59,10 +56,8 @@ minimumSteps ::
 minimumSteps depth (prev, curr) (prev', curr')
     | null curr || null curr' = infinity
     | (not . null . Set.intersection curr) curr' = depth
-    | Set.foldl
-          (\p x -> p || (flip Set.member prev' . buildingStateToStr) x)
-          False
-          curr = depth - 1
+    | (not . null . Set.intersection prev' . Set.map buildingStateToStr) curr =
+        depth - 1
     | otherwise =
         minimumSteps
             (depth + 2)
@@ -73,10 +68,9 @@ minimumSteps depth (prev, curr) (prev', curr')
 
 buildingStateToStr :: (Int, [Pair (Set Int)]) -> String
 buildingStateToStr (floor, materials) =
-    show floor ++
-    "|" ++ (intercalate ";" . map (\(a, b) -> f a ++ ":" ++ f b)) materials
-  where
-    f = intercalate "," . map show . Set.elems
+    let f = intercalate "," . map show . Set.elems
+        g (a, b) = f a ++ ":" ++ f b
+     in show floor ++ "|" ++ (intercalate ";" . map g) materials
 
 nextStatesFromSet ::
        Set String -> Set (Int, [Pair (Set Int)]) -> Set (Int, [Pair (Set Int)])
@@ -88,18 +82,17 @@ nextStatesAll ::
     -> (Int, [Pair (Set Int)])
     -> Set (Int, [Pair (Set Int)])
 nextStatesAll prevStates collectedStates (curFloor, materialState) =
-    (Set.union collectedStates .
-     foldl
-         (nextStateFromFloorAndTakable prevStates curFloor materialState)
-         Set.empty .
-     concatMap (\(i, x) -> map (x, ) (drop i takables)) . zip [1 ..])
-        takables
-  where
-    takables =
-        [Nothing] ++
-        (map (Just . (True, )) . Set.toList . fst) currFloorState ++
-        (map (Just . (False, )) . Set.toList . snd) currFloorState
-    currFloorState = materialState !! curFloor
+    let currFloorState = materialState !! curFloor
+        takables =
+            [Nothing] ++
+            (map (Just . (True, )) . Set.toList . fst) currFloorState ++
+            (map (Just . (False, )) . Set.toList . snd) currFloorState
+     in (Set.union collectedStates .
+         foldl
+             (nextStateFromFloorAndTakable prevStates curFloor materialState)
+             Set.empty .
+         concatMap (\(i, x) -> map (x, ) (drop i takables)) . zip [1 ..])
+            takables
 
 nextStateFromFloorAndTakable ::
        Set String
@@ -115,26 +108,25 @@ nextStateFromFloorAndTakable prevStates currFloor materialState collectedNextSta
                  (materialStateDown ++ materialStateUp)
   where
     materialStateDown =
-        [ (currFloor - 1, msd)
-        | currFloor > 0 &&
-              isFloorValid materialsDown &&
-              (not . flip Set.member prevStates . buildingStateToStr)
-                  (currFloor - 1, msd)
-        ]
-      where
-        msd = setAt (currFloor - 1) materialsDown nms
-        materialsDown =
-            (addToFloor t' . addToFloor t . (!! (currFloor - 1))) nms
+        let msd = setAt (currFloor - 1) materialsDown nms
+            materialsDown =
+                (addToFloor t' . addToFloor t . (!! (currFloor - 1))) nms
+         in [ (currFloor - 1, msd)
+            | currFloor > 0 &&
+                  isFloorValid materialsDown &&
+                  (not . flip Set.member prevStates . buildingStateToStr)
+                      (currFloor - 1, msd)
+            ]
     materialStateUp =
-        [ (currFloor + 1, msu)
-        | currFloor + 1 < length nms &&
-              isFloorValid materialsUp &&
-              (not . flip Set.member prevStates . buildingStateToStr)
-                  (currFloor + 1, msu)
-        ]
-      where
-        msu = setAt (currFloor + 1) materialsUp nms
-        materialsUp = (addToFloor t' . addToFloor t . (!! (currFloor + 1))) nms
+        let msu = setAt (currFloor + 1) materialsUp nms
+            materialsUp =
+                (addToFloor t' . addToFloor t . (!! (currFloor + 1))) nms
+         in [ (currFloor + 1, msu)
+            | currFloor + 1 < length nms &&
+                  isFloorValid materialsUp &&
+                  (not . flip Set.member prevStates . buildingStateToStr)
+                      (currFloor + 1, msu)
+            ]
     nms = setAt currFloor materialState' materialState
     materialState' =
         (deleteFromFloor t' . deleteFromFloor t . (!! currFloor)) materialState
@@ -168,9 +160,9 @@ makeFloors ::
        ([Pair (Set Int)], Map String Int)
     -> [String]
     -> ([Pair (Set Int)], Map String Int)
-makeFloors (arr, elemIds) toks = (arr ++ [floor], elemIds')
-  where
-    (floor, elemIds') = makeFloor elemIds toks
+makeFloors (arr, elemIds) toks =
+    let (floor, elemIds') = makeFloor elemIds toks
+     in (arr ++ [floor], elemIds')
 
 makeFloor :: Map String Int -> [String] -> (Pair (Set Int), Map String Int)
 makeFloor elemIds (_:_:_:_:"nothing":_) = ((Set.empty, Set.empty), elemIds)

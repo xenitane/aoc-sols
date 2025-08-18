@@ -11,12 +11,13 @@ solve :: String -> String
 solve input = pairToStr (first, second)
   where
     (first, second) =
-        (foldl (boths (\a -> (+ a) . isValidTriangle)) (0, 0) .
-         zz . ((\x -> (x, transform x)) . map (map read . words) . lines))
-            input
+        let accFunc a = (+ a) . isValidTriangle
+         in (foldl (boths accFunc) (0, 0) .
+             zz transform . map (map read . words) . lines)
+                input
 
-zz :: Pair [a] -> [Pair a]
-zz (a, b) = zip a b
+zz :: ([a] -> [a]) -> [a] -> [Pair a]
+zz f a = zip a (f a)
 
 boths :: (a -> b -> c) -> Pair a -> Pair b -> Pair c
 boths f (a, a') (b, b') = (f a b, f a' b')
@@ -32,11 +33,10 @@ transpose [[a0, b0, c0], [a1, b1, c1], [a2, b2, c2]] =
 
 isValidTriangle :: [Int] -> Int
 isValidTriangle triangle =
-    if a + b > c
-        then 1
-        else 0
-  where
-    [a, b, c] = sort triangle
+    let [a, b, c] = sort triangle
+     in if a + b > c
+            then 1
+            else 0
 
 inputFilePath :: FilePath
 inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
