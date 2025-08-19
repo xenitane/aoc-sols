@@ -1,13 +1,28 @@
 {-# LANGUAGE CPP #-}
 
+import Lib
+    ( Pair
+    , ($*)
+    , (*$)
+    , (*$*)
+    , (=:>)
+    , (|>)
+    , block
+    , boths
+    , exit
+    , logId
+    , pStr
+    , pStr'
+    , pairToStr
+    , sLogId
+    , safeReadFile
+    , setAt
+    , trimTrailing
+    )
+
 import Data.Bits (popCount)
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Lib (exit, pairToStr, safeReadFile, trimTrailing)
-import System.Environment (lookupEnv)
-import System.Exit (ExitCode(ExitFailure), exitWith)
-
-type Pair a = (a, a)
 
 type Point = Pair Int
 
@@ -27,12 +42,11 @@ solve :: String -> String
 solve input = pairToStr (first, second)
   where
     first =
-        (minimumSteps shift 0 (Set.empty, Set.singleton startPoint) .
-         (Set.empty, ) . Set.singleton)
-            targetPoint
+        targetPoint |> Set.singleton |> (Set.empty, ) |>
+        minimumSteps shift 0 (Set.empty, Set.singleton startPoint)
     second =
-        (countReachableInSteps shift numItr Set.empty . Set.singleton)
-            startPoint
+        startPoint |> Set.singleton |>
+        countReachableInSteps shift numItr Set.empty
     shift = read input
 
 countReachableInSteps :: Int -> Int -> Set Point -> Set Point -> Int
@@ -49,8 +63,8 @@ countReachableInSteps shift stepsLeft reached currentlyOn
 minimumSteps :: Int -> Int -> Pair (Set Point) -> Pair (Set Point) -> Int
 minimumSteps shift depth (prev0, curr0) (prev1, curr1)
     | null curr0 || null curr1 = infinity
-    | (not . null) (Set.intersection curr0 curr1) = depth
-    | (not . null) (Set.intersection curr0 prev1) = depth - 1
+    | Set.intersection curr0 curr1 |> null |> not = depth
+    | Set.intersection curr0 prev1 |> null |> not = depth - 1
     | otherwise =
         minimumSteps
             shift
@@ -67,56 +81,39 @@ nextStatesAll shift seenPoints collectedPoints (x, y) =
     let surrounds = [(x, y + 1), (x + 1, y), (x, y - 1), (x - 1, y)]
         shouldStep p =
             isPointOpenWithShift shift p && not (Set.member p seenPoints)
-     in (Set.union collectedPoints . Set.fromList . filter shouldStep) surrounds
+     in surrounds |> filter shouldStep |> Set.fromList |>
+        Set.union collectedPoints
 
 isPointOpenWithShift :: Int -> Point -> Bool
-isPointOpenWithShift shift (x, y) =
-    x >= 0 &&
-    y >= 0 && (even . popCount) (shift + (x + y) * (x + y) + 3 * x + y)
-
-inputFilePath :: FilePath
-inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testInputFilePath :: FilePath
-testInputFilePath = "../test_inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testOutputFilePath :: FilePath
-testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-runNormalMode :: IO ()
-runNormalMode = do
-    input <- safeReadFile inputFilePath
-    (putStr . solve) input
-
-runTestMode :: IO ()
-runTestMode = do
-    input <- safeReadFile testInputFilePath
-    expectedIO <- safeReadFile testOutputFilePath
-    let expected = trimTrailing expectedIO
-    let actual = (trimTrailing . solve) input
-    if actual == expected
-        then putStrLn "test passed"
-        else do
-            putStrLn "test failed"
-            putStrLn "Expected:"
-            putStrLn "--------------"
-            putStrLn expected
-            putStrLn "--------------"
-            putStrLn "Got:"
-            putStrLn "--------------"
-            putStrLn actual
-            putStrLn "--------------"
-            exit 1
+isPointOpenWithShift shift (x, y)
+    | x >= 0 && y >= 0 =
+        (shift + (x + y) * (x + y) + 3 * x + y) |> popCount |> even
+    | otherwise = False
 
 main :: IO ()
 #if defined YEAR && defined DAY
+suff :: FilePath
+suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
+#if !defined TEST_MODE
 main = do
-    testMode <- lookupEnv "TEST_MODE"
-    case testMode of
-        Just "1" -> runTestMode
-        _ -> runNormalMode
+    input <- safeReadFile $ "../inputs" ++ suff
+    input |> solve |> pStr
 #else
 main = do
-    putStrLn "essential variables not defined"
+    input <- safeReadFile $ "../test_inputs" ++ suff
+    expected' <- safeReadFile $ "../test_outputs" ++ suff
+    let actual = input |> solve |> trimTrailing
+        expected = trimTrailing expected'
+     in if actual == expected
+            then pStr' "test passes\n"
+            else do
+                pStr' "test failed\n"
+                block "Expected" expected
+                block "Actual" actual
+                exit 1
+#endif
+#else
+main = do
+    pStr' "essential variables not defined"
     exit 1
 #endif

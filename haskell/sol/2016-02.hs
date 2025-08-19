@@ -1,15 +1,28 @@
 {-# LANGUAGE CPP #-}
 
-import Data.Char (chr, ord)
-import Data.List (elemIndex)
-import Data.Map (Map, lookup)
+import Lib
+    ( Pair
+    , ($*)
+    , (*$)
+    , (*$*)
+    , (=:>)
+    , (|>)
+    , block
+    , boths
+    , exit
+    , logId
+    , pStr
+    , pStr'
+    , pairToStr
+    , sLogId
+    , safeReadFile
+    , setAt
+    , trimTrailing
+    )
+
+import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
-import qualified Data.Maybe as Maybe
-import Data.Tuple.Extra (both)
-import Lib (exit, pairToStr, safeReadFile, trimTrailing)
-import System.Environment (lookupEnv)
-import System.Exit (ExitCode(ExitFailure), exitWith)
 
 moveId :: Char -> Int
 moveId 'L' = 0
@@ -17,108 +30,80 @@ moveId 'U' = 1
 moveId 'R' = 2
 moveId 'D' = 3
 
-move1map =
-    Map.fromList
-        [ ('1', "1124")
-        , ('2', "1235")
-        , ('3', "2336")
-        , ('4', "4157")
-        , ('5', "4268")
-        , ('6', "5369")
-        , ('7', "7487")
-        , ('8', "7598")
-        , ('9', "8699")
-        ]
-
-move2map =
-    Map.fromList
-        [ ('1', "1113")
-        , ('2', "2236")
-        , ('3', "2147")
-        , ('4', "3448")
-        , ('5', "5565")
-        , ('6', "527A")
-        , ('7', "638B")
-        , ('8', "749C")
-        , ('9', "8999")
-        , ('A', "A6BA")
-        , ('B', "A7CD")
-        , ('C', "B8CC")
-        , ('D', "DBDD")
-        ]
+moveMapsG =
+    Map.fromList $*
+    ( [ ('1', "1124")
+      , ('2', "1235")
+      , ('3', "2336")
+      , ('4', "4157")
+      , ('5', "4268")
+      , ('6', "5369")
+      , ('7', "7487")
+      , ('8', "7598")
+      , ('9', "8699")
+      ]
+    , [ ('1', "1113")
+      , ('2', "2236")
+      , ('3', "2147")
+      , ('4', "3448")
+      , ('5', "5565")
+      , ('6', "527A")
+      , ('7', "638B")
+      , ('8', "749C")
+      , ('9', "8999")
+      , ('A', "A6BA")
+      , ('B', "A7CD")
+      , ('C', "B8CC")
+      , ('D', "DBDD")
+      ])
 
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    (first, second) =
-        (foldl (reposition (move1map, move2map)) ("", "") . lines) input
-
-type Pair a = (a, a)
+    (first, second) = input |> lines |> foldl (reposition moveMapsG) ("", "")
 
 reposition :: Pair (Map Char String) -> Pair String -> String -> Pair String
-reposition moveMaps ("", "") =
-    both (: []) . moveFromAccToCode moveMaps ('5', '5')
-reposition moveMaps s =
-    let append a = (a ++) . (: [])
-     in boths append s . moveFromAccToCode moveMaps (both last s)
+reposition moveMaps ("", "") str =
+    str |> moveFromAccToCode moveMaps ('5', '5') |> ((: []) $*)
+reposition moveMaps state str =
+    let append a = (: []) =:> (a ++)
+     in str |> moveFromAccToCode moveMaps (last $* state) |> boths append state
 
 moveFromAccToCode :: Pair (Map Char String) -> Pair Char -> String -> Pair Char
 moveFromAccToCode _ c "" = c
 moveFromAccToCode moveMaps c (h:r) =
-    moveFromAccToCode moveMaps (next moveMaps (moveId h) c) r
+    let c' = c |> next moveMaps (moveId h)
+     in r |> moveFromAccToCode moveMaps c'
 
 next :: Pair (Map Char String) -> Int -> Pair Char -> Pair Char
 next mms idx keys =
-    both
-        (last . take (idx + 1) . Maybe.fromMaybe "0000")
-        (boths Map.lookup keys mms)
-
-boths :: (a -> b -> c) -> Pair a -> Pair b -> Pair c
-boths f (a, b) (a', b') = (f a a', f b b')
-
-inputFilePath :: FilePath
-inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testInputFilePath :: FilePath
-testInputFilePath = "../test_inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testOutputFilePath :: FilePath
-testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-runNormalMode :: IO ()
-runNormalMode = do
-    input <- safeReadFile inputFilePath
-    (putStr . solve) input
-
-runTestMode :: IO ()
-runTestMode = do
-    input <- safeReadFile testInputFilePath
-    expectedIO <- safeReadFile testOutputFilePath
-    let expected = trimTrailing expectedIO
-    let actual = (trimTrailing . solve) input
-    if actual == expected
-        then putStrLn "test passed"
-        else do
-            putStrLn "test failed"
-            putStrLn "Expected:"
-            putStrLn "--------------"
-            putStrLn expected
-            putStrLn "--------------"
-            putStrLn "Got:"
-            putStrLn "--------------"
-            putStrLn actual
-            putStrLn "--------------"
-            exit 1
+    let ncs x = x |> fromMaybe "0000" |> (!! idx)
+     in mms |> boths Map.lookup keys |> (ncs $*)
 
 main :: IO ()
 #if defined YEAR && defined DAY
+suff :: FilePath
+suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
+#if !defined TEST_MODE
 main = do
-    testMode <- lookupEnv "TEST_MODE"
-    case testMode of
-        Just "1" -> runTestMode
-        _ -> runNormalMode
+    input <- safeReadFile $ "../inputs" ++ suff
+    input |> solve |> pStr
 #else
 main = do
-    putStrLn "essential variables not defined"
+    input <- safeReadFile $ "../test_inputs" ++ suff
+    expected' <- safeReadFile $ "../test_outputs" ++ suff
+    let actual = input |> solve |> trimTrailing
+        expected = trimTrailing expected'
+     in if actual == expected
+            then pStr' "test passes\n"
+            else do
+                pStr' "test failed\n"
+                block "Expected" expected
+                block "Actual" actual
+                exit 1
+#endif
+#else
+main = do
+    pStr' "essential variables not defined"
     exit 1
 #endif

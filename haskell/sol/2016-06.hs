@@ -1,29 +1,41 @@
 {-# LANGUAGE CPP #-}
 
-import Data.List (sortBy)
-import Data.Map (Map, elems, empty, toList)
-import qualified Data.Map as Map
-import Data.Maybe (fromMaybe)
-import qualified Data.Maybe as Maybe
-import Lib (exit, pairToStr, safeReadFile, trimTrailing)
-import System.Environment (lookupEnv)
-import System.Exit (ExitCode(ExitFailure), exitWith)
+import Lib
+    ( Pair
+    , ($*)
+    , (*$)
+    , (*$*)
+    , (=:>)
+    , (|>)
+    , block
+    , boths
+    , exit
+    , logId
+    , pStr
+    , pStr'
+    , pairToStr
+    , sLogId
+    , safeReadFile
+    , setAt
+    , trimTrailing
+    )
 
-type Pair a = (a, a)
+import Data.List (sortBy)
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
     (first, second) =
-        (foldl getMaxMin ("", "") .
-         Map.elems . foldl mergeLines Map.empty . lines)
-            input
+        input |> lines |> foldl mergeLines Map.empty |> Map.elems |>
+        foldl getMaxMin ("", "")
 
 getMaxMin :: Pair String -> Map Char Int -> Pair String
 getMaxMin (s, s') indFrqMap =
     let pFlip (a, b) = (b, a)
         comparator a a' = compare (pFlip a) (pFlip a')
-        items = (sortBy comparator . Map.toList) indFrqMap
+        items = indFrqMap |> Map.toList |> sortBy comparator
         (c, _) = last items
         (c', _) = head items
      in (s ++ [c], s' ++ [c'])
@@ -38,49 +50,30 @@ addChar frqMap idx (c:rest) =
             Map.insertWith (Map.unionWith (+)) idx (Map.singleton c 1) frqMap
      in addChar frqMap' (idx + 1) rest
 
-inputFilePath :: FilePath
-inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testInputFilePath :: FilePath
-testInputFilePath = "../test_inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testOutputFilePath :: FilePath
-testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-runNormalMode :: IO ()
-runNormalMode = do
-    input <- safeReadFile inputFilePath
-    (putStr . solve) input
-
-runTestMode :: IO ()
-runTestMode = do
-    input <- safeReadFile testInputFilePath
-    expectedIO <- safeReadFile testOutputFilePath
-    let expected = trimTrailing expectedIO
-    let actual = (trimTrailing . solve) input
-    if actual == expected
-        then putStrLn "test passed"
-        else do
-            putStrLn "test failed"
-            putStrLn "Expected:"
-            putStrLn "--------------"
-            putStrLn expected
-            putStrLn "--------------"
-            putStrLn "Got:"
-            putStrLn "--------------"
-            putStrLn actual
-            putStrLn "--------------"
-            exit 1
-
 main :: IO ()
 #if defined YEAR && defined DAY
+suff :: FilePath
+suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
+#if !defined TEST_MODE
 main = do
-    testMode <- lookupEnv "TEST_MODE"
-    case testMode of
-        Just "1" -> runTestMode
-        _ -> runNormalMode
+    input <- safeReadFile $ "../inputs" ++ suff
+    input |> solve |> pStr
 #else
 main = do
-    putStrLn "essential variables not defined"
+    input <- safeReadFile $ "../test_inputs" ++ suff
+    expected' <- safeReadFile $ "../test_outputs" ++ suff
+    let actual = input |> solve |> trimTrailing
+        expected = trimTrailing expected'
+     in if actual == expected
+            then pStr' "test passes\n"
+            else do
+                pStr' "test failed\n"
+                block "Expected" expected
+                block "Actual" actual
+                exit 1
+#endif
+#else
+main = do
+    pStr' "essential variables not defined"
     exit 1
 #endif

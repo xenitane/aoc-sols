@@ -1,12 +1,27 @@
 {-# LANGUAGE CPP #-}
 
-import Data.Char (isDigit)
+import Lib
+    ( Pair
+    , ($*)
+    , (*$)
+    , (*$*)
+    , (=:>)
+    , (|>)
+    , block
+    , boths
+    , exit
+    , logId
+    , pStr
+    , pStr'
+    , pairToStr
+    , sLogId
+    , safeReadFile
+    , setAt
+    , trimTrailing
+    )
+
 import Data.List (intercalate)
 import Data.List.Split (condense, dropBlanks, dropDelims, oneOf, split)
-import Data.Tuple.Extra (both)
-import Lib (exit, pairToStr, safeReadFile, trimTrailing)
-import System.Environment (lookupEnv)
-import System.Exit (ExitCode(ExitFailure), exitWith)
 
 matH :: Int
 matH = 6
@@ -18,29 +33,27 @@ solve :: String -> String
 solve input = pairToStr (first, second)
   where
     first =
-        let accFunc p = (+ (length . filter id) p)
+        let accFunc p = (+ (p |> filter id |> length))
          in foldr accFunc 0 mat
-    second = (intercalate "\n" . map characterize) mat
+    second = mat |> map characterize |> intercalate "\n"
     mat =
-        (foldl applyInstruction ((replicate matH . replicate matW) False) .
-         lines)
-            input
+        let mat = False |> replicate matW |> replicate matH
+         in input |> lines |> foldl applyInstruction mat
 
 characterize :: [Bool] -> String
 characterize [] = ""
 characterize row =
-    (concatMap boolToChar . take 5) row ++ " " ++ (characterize . drop 5) row
+    let (first5, rest) = (take 5, drop 5) *$ row
+     in concatMap boolToChar first5 ++ " " ++ characterize rest
 
 boolToChar :: Bool -> String
-boolToChar x =
-    if x
-        then "@@"
-        else "  "
+boolToChar True = "@@"
+boolToChar False = "  "
 
 applyInstruction :: [[Bool]] -> String -> [[Bool]]
 applyInstruction mat ins =
-    let splitter = (split . dropBlanks . condense . dropDelims . oneOf) " =xy"
-        insWords = splitter ins
+    let splitter = oneOf =:> dropDelims =:> condense =:> dropBlanks =:> split
+        insWords = splitter " =xy" ins
      in case insWords of
             ("rect":rest) -> activate rest mat
             ("rotate":"row":rest) -> rotateRow rest mat
@@ -51,9 +64,9 @@ rotateCol [locStr, _, qtyStr] mat =
     let idx = read locStr
         qty = rem (read qtyStr) matH
         col = map (!! idx) mat
-        suffix = (reverse . take qty . reverse) col
-        prefix = (reverse . drop qty . reverse) col
-        accFunc row = (++ drop (idx + 1) row) . (take idx row ++) . (: [])
+        (suffix, prefix) =
+            col |> reverse |> ((take qty, drop qty) *$) |> (reverse $*)
+        accFunc row = (: []) =:> (take idx row ++) =:> (++ drop (idx + 1) row)
      in zipWith accFunc mat (suffix ++ prefix)
 
 rotateRow :: [String] -> [[Bool]] -> [[Bool]]
@@ -61,58 +74,40 @@ rotateRow [locStr, _, qtyStr] mat =
     let idx = read locStr
         row = mat !! idx
         qty = rem (read qtyStr) matW
-        suffix = (reverse . take qty . reverse) row
-        prefix = (reverse . drop qty . reverse) row
+        (suffix, prefix) =
+            row |> reverse |> ((take qty, drop qty) *$) |> (reverse $*)
      in take idx mat ++ [suffix ++ prefix] ++ drop (idx + 1) mat
 
 activate :: [String] -> [[Bool]] -> [[Bool]]
 activate [ws, hs] mat =
-    let (w, h) = both read (ws, hs)
-     in (map ((replicate w True ++) . drop w) . take h) mat ++ drop h mat
-
-inputFilePath :: FilePath
-inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testInputFilePath :: FilePath
-testInputFilePath = "../test_inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testOutputFilePath :: FilePath
-testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-runNormalMode :: IO ()
-runNormalMode = do
-    input <- safeReadFile inputFilePath
-    (putStr . solve) input
-
-runTestMode :: IO ()
-runTestMode = do
-    input <- safeReadFile testInputFilePath
-    expectedIO <- safeReadFile testOutputFilePath
-    let expected = trimTrailing expectedIO
-    let actual = (trimTrailing . solve) input
-    if actual == expected
-        then putStrLn "test passed"
-        else do
-            putStrLn "test failed"
-            putStrLn "Expected:"
-            putStrLn "--------------"
-            putStrLn expected
-            putStrLn "--------------"
-            putStrLn "Got:"
-            putStrLn "--------------"
-            putStrLn actual
-            putStrLn "--------------"
-            exit 1
+    let (w, h) = read $* (ws, hs)
+     in mat |> take h |> map (drop w =:> (replicate w True ++)) |>
+        (++ drop h mat)
 
 main :: IO ()
 #if defined YEAR && defined DAY
+suff :: FilePath
+suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
+#if !defined TEST_MODE
 main = do
-    testMode <- lookupEnv "TEST_MODE"
-    case testMode of
-        Just "1" -> runTestMode
-        _ -> runNormalMode
+    input <- safeReadFile $ "../inputs" ++ suff
+    input |> solve |> pStr
 #else
 main = do
-    putStrLn "essential variables not defined"
+    input <- safeReadFile $ "../test_inputs" ++ suff
+    expected' <- safeReadFile $ "../test_outputs" ++ suff
+    let actual = input |> solve |> trimTrailing
+        expected = trimTrailing expected'
+     in if actual == expected
+            then pStr' "test passes\n"
+            else do
+                pStr' "test failed\n"
+                block "Expected" expected
+                block "Actual" actual
+                exit 1
+#endif
+#else
+main = do
+    pStr' "essential variables not defined"
     exit 1
 #endif

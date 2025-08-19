@@ -1,10 +1,26 @@
 {-# LANGUAGE CPP #-}
 
+import Lib
+    ( Pair
+    , ($*)
+    , (*$)
+    , (*$*)
+    , (=:>)
+    , (|>)
+    , block
+    , boths
+    , exit
+    , logId
+    , pStr
+    , pStr'
+    , pairToStr
+    , sLogId
+    , safeReadFile
+    , setAt
+    , trimTrailing
+    )
+
 import Data.Char (isLower, ord)
-import Data.Tuple.Extra (both)
-import Lib (exit, pairToStr, safeReadFile, trimTrailing)
-import System.Environment (lookupEnv)
-import System.Exit (ExitCode(ExitFailure), exitWith)
 
 data Val
     = VReg Int
@@ -20,12 +36,9 @@ solve :: String -> String
 solve input = pairToStr (first, second)
   where
     (first, second) =
-        let instructions = (map (makeInstruction . words) . lines) input
-         in both
-                (head .
-                 flip (runInstruction 0) instructions .
-                 ([0, 0] ++) . (++ [0]) . (: []))
-                (0, 1)
+        let instructions = input |> lines |> map (words =:> makeInstruction)
+            f x = runInstruction 0 [0, 0, x, 0] instructions |> head
+         in f $* (0, 1)
 
 runInstruction :: Int -> [Int] -> [Instruction] -> [Int]
 runInstruction idx state instructions
@@ -38,7 +51,7 @@ runInstruction idx state instructions
             IDec reg -> (idx + 1, decAt reg state)
             IJnz (val, offset) ->
                 let uval = unwrapVal state val
-                 in (idx + (head . ([1 | uval == 0] ++)) [offset], state)
+                 in (idx + ([offset] |> ([1 | uval == 0] ++) |> head), state)
             ICpy (val, reg) ->
                 let uval = unwrapVal state val
                  in (idx + 1, setAt reg uval state)
@@ -48,20 +61,17 @@ unwrapVal _ (VRaw v) = v
 unwrapVal state (VReg reg) = state !! reg
 
 incAt :: Int -> [Int] -> [Int]
-incAt i state = setAt i ((succ . (!! i)) state) state
+incAt i state = setAt i ((state !! i) |> succ) state
 
 decAt :: Int -> [Int] -> [Int]
-decAt i state = setAt i ((pred . (!! i)) state) state
-
-setAt :: Int -> a -> [a] -> [a]
-setAt i v arr = take i arr ++ [v] ++ drop (i + 1) arr
+decAt i state = setAt i ((state !! i) |> pred) state
 
 zerrr :: Int
 zerrr = ord 'a'
 
 wrapVal val =
     if (isLower . head) val
-        then VReg ((ord . head) val - zerrr)
+        then VReg (val |> head |> ord |> (zerrr -))
         else VRaw (read val)
 
 makeInstruction :: [String] -> Instruction
@@ -74,49 +84,30 @@ makeInstruction ["jnz", val, offset] =
     let vVal = wrapVal val
      in IJnz (vVal, read offset)
 
-inputFilePath :: FilePath
-inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testInputFilePath :: FilePath
-testInputFilePath = "../test_inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testOutputFilePath :: FilePath
-testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-runNormalMode :: IO ()
-runNormalMode = do
-    input <- safeReadFile inputFilePath
-    (putStr . solve) input
-
-runTestMode :: IO ()
-runTestMode = do
-    input <- safeReadFile testInputFilePath
-    expectedIO <- safeReadFile testOutputFilePath
-    let expected = trimTrailing expectedIO
-    let actual = (trimTrailing . solve) input
-    if actual == expected
-        then putStrLn "test passed"
-        else do
-            putStrLn "test failed"
-            putStrLn "Expected:"
-            putStrLn "--------------"
-            putStrLn expected
-            putStrLn "--------------"
-            putStrLn "Got:"
-            putStrLn "--------------"
-            putStrLn actual
-            putStrLn "--------------"
-            exit 1
-
 main :: IO ()
 #if defined YEAR && defined DAY
+suff :: FilePath
+suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
+#if !defined TEST_MODE
 main = do
-    testMode <- lookupEnv "TEST_MODE"
-    case testMode of
-        Just "1" -> runTestMode
-        _ -> runNormalMode
+    input <- safeReadFile $ "../inputs" ++ suff
+    input |> solve |> pStr
 #else
 main = do
-    putStrLn "essential variables not defined"
+    input <- safeReadFile $ "../test_inputs" ++ suff
+    expected' <- safeReadFile $ "../test_outputs" ++ suff
+    let actual = input |> solve |> trimTrailing
+        expected = trimTrailing expected'
+     in if actual == expected
+            then pStr' "test passes\n"
+            else do
+                pStr' "test failed\n"
+                block "Expected" expected
+                block "Actual" actual
+                exit 1
+#endif
+#else
+main = do
+    pStr' "essential variables not defined"
     exit 1
 #endif

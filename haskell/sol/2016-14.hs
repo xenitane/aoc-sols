@@ -1,16 +1,31 @@
 {-# LANGUAGE CPP #-}
 
-import Crypto.Hash (Digest, MD5(..), hashWith)
-import Data.ByteArray (convert)
+import Lib
+    ( Pair
+    , ($*)
+    , (*$)
+    , (*$*)
+    , (=:>)
+    , (|>)
+    , block
+    , boths
+    , exit
+    , logId
+    , pStr
+    , pStr'
+    , pairToStr
+    , sLogId
+    , safeReadFile
+    , setAt
+    , trimTrailing
+    )
+
+import Crypto.Hash (MD5(..), hashWith)
 import qualified Data.ByteString.Char8 as BS
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Tuple.Extra (both)
-import Lib (exit, pairToStr, safeReadFile, trimTrailing)
-import System.Environment (lookupEnv)
-import System.Exit (ExitCode(ExitFailure), exitWith)
 
 keysReq :: Int
 keysReq = 64
@@ -24,8 +39,7 @@ candidadtuereLimit = 1000
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
-    -- second = 0 :: Int
-    (first, second) = both (findIndexOfLastKey 0 0 Map.empty input) iterQtys
+    (first, second) = findIndexOfLastKey 0 0 Map.empty input $* iterQtys
 
 findIndexOfLastKey ::
        Int -> Int -> Map Int (Maybe (Char, Set Char)) -> String -> Int -> Int
@@ -88,75 +102,56 @@ verifyKey tripChar sessions idx keys indexTripPentCache prefix iter
 computeTripPentData :: Int -> String -> Maybe (Char, Set Char)
 computeTripPentData iter str =
     let str' = makeMD5DigestNtimes iter str
-     in (fmap (, pentChars str') . mTripChar) str'
+     in (, pentChars str') <$> mTripChar str'
 
 pentChars :: String -> Set Char
 pentChars str
     | length str == 4 = Set.empty
     | otherwise =
-        (if (all (== head str) . take 5) str
+        str |> drop 1 |> pentChars |>
+        (if str |> take 5 |> all (== head str)
              then Set.insert (head str)
              else id)
-            ((pentChars . drop 1) str)
 
 mTripChar :: String -> Maybe Char
 mTripChar str
     | length str == 2 = Nothing
     | otherwise =
-        (if (all (== head str) . take 3) str
-             then Just . head
-             else mTripChar . drop 1)
-            str
+        str |>
+        if str |> take 3 |> all (== head str)
+            then head =:> Just
+            else drop 1 =:> mTripChar
 
 makeMD5DigestNtimes :: Int -> String -> String
 makeMD5DigestNtimes n str
     | n == 0 = str
     | otherwise =
-        (makeMD5DigestNtimes (n - 1) . show . hashWith MD5 . BS.pack) str
-
-inputFilePath :: FilePath
-inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testInputFilePath :: FilePath
-testInputFilePath = "../test_inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testOutputFilePath :: FilePath
-testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-runNormalMode :: IO ()
-runNormalMode = do
-    input <- safeReadFile inputFilePath
-    (putStr . solve) input
-
-runTestMode :: IO ()
-runTestMode = do
-    input <- safeReadFile testInputFilePath
-    expectedIO <- safeReadFile testOutputFilePath
-    let expected = trimTrailing expectedIO
-    let actual = (trimTrailing . solve) input
-    if actual == expected
-        then putStrLn "test passed"
-        else do
-            putStrLn "test failed"
-            putStrLn "Expected:"
-            putStrLn "--------------"
-            putStrLn expected
-            putStrLn "--------------"
-            putStrLn "Got:"
-            putStrLn "--------------"
-            putStrLn actual
-            putStrLn "--------------"
-            exit 1
+        str |> BS.pack |> hashWith MD5 |> show |> makeMD5DigestNtimes (n - 1)
 
 main :: IO ()
 #if defined YEAR && defined DAY
+suff :: FilePath
+suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
+#if !defined TEST_MODE
 main = do
-    testMode <- lookupEnv "TEST_MODE"
-    case testMode of
-        Just "1" -> runTestMode
-        _ -> runNormalMode
+    input <- safeReadFile $ "../inputs" ++ suff
+    input |> solve |> pStr
 #else
 main = do
-    putStrLn "essential variables not defined"
+    input <- safeReadFile $ "../test_inputs" ++ suff
+    expected' <- safeReadFile $ "../test_outputs" ++ suff
+    let actual = input |> solve |> trimTrailing
+        expected = trimTrailing expected'
+     in if actual == expected
+            then pStr' "test passes\n"
+            else do
+                pStr' "test failed\n"
+                block "Expected" expected
+                block "Actual" actual
+                exit 1
+#endif
+#else
+main = do
+    pStr' "essential variables not defined"
     exit 1
 #endif

@@ -1,10 +1,26 @@
 {-# LANGUAGE CPP #-}
 
+import Lib
+    ( Pair
+    , ($*)
+    , (*$)
+    , (*$*)
+    , (=:>)
+    , (|>)
+    , block
+    , boths
+    , exit
+    , logId
+    , pStr
+    , pStr'
+    , pairToStr
+    , sLogId
+    , safeReadFile
+    , setAt
+    , trimTrailing
+    )
+
 import Data.Char (isDigit)
-import Data.Tuple.Extra (both)
-import Lib (exit, pairToStr, safeReadFile, trimTrailing)
-import System.Environment (lookupEnv)
-import System.Exit (ExitCode(ExitFailure), exitWith)
 
 solve :: String -> String
 solve input = pairToStr (first, second)
@@ -14,61 +30,38 @@ solve input = pairToStr (first, second)
 decompress :: String -> (Int, Int)
 decompress "" = (0, 0)
 decompress ('(':rest) =
-    let rawRest = (drop 1 . dropWhile (/= ')')) rest
-     in (boths (+) (both (* times) (len, (snd . decompress . take len) rawRest)) .
-         decompress)
-            (drop len rawRest)
+    let rawRest = rest |> dropWhile (/= ')') |> drop 1
+     in rawRest |> drop len |> decompress |>
+        boths (+) ((* times) $* (len, rawRest |> take len |> decompress |> snd))
   where
-    times = (read . takeWhile isDigit . drop 1 . dropWhile isDigit) rest
-    len = (read . takeWhile isDigit) rest
-decompress (h:rest) = (both succ . decompress) rest
-
-boths :: (a -> b -> c) -> (a, a) -> (b, b) -> (c, c)
-boths f (a, a') (b, b') = (f a b, f a' b')
-
-inputFilePath :: FilePath
-inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testInputFilePath :: FilePath
-testInputFilePath = "../test_inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testOutputFilePath :: FilePath
-testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-runNormalMode :: IO ()
-runNormalMode = do
-    input <- safeReadFile inputFilePath
-    (putStr . solve) input
-
-runTestMode :: IO ()
-runTestMode = do
-    input <- safeReadFile testInputFilePath
-    expectedIO <- safeReadFile testOutputFilePath
-    let expected = trimTrailing expectedIO
-    let actual = (trimTrailing . solve) input
-    if actual == expected
-        then putStrLn "test passed"
-        else do
-            putStrLn "test failed"
-            putStrLn "Expected:"
-            putStrLn "--------------"
-            putStrLn expected
-            putStrLn "--------------"
-            putStrLn "Got:"
-            putStrLn "--------------"
-            putStrLn actual
-            putStrLn "--------------"
-            exit 1
+    times = rest |> dropWhile isDigit |> drop 1 |> takeWhile isDigit |> read
+    len = rest |> takeWhile isDigit |> read
+decompress (h:rest) = rest |> decompress |> (succ $*)
 
 main :: IO ()
 #if defined YEAR && defined DAY
+suff :: FilePath
+suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
+#if !defined TEST_MODE
 main = do
-    testMode <- lookupEnv "TEST_MODE"
-    case testMode of
-        Just "1" -> runTestMode
-        _ -> runNormalMode
+    input <- safeReadFile $ "../inputs" ++ suff
+    input |> solve |> pStr
 #else
 main = do
-    putStrLn "essential variables not defined"
+    input <- safeReadFile $ "../test_inputs" ++ suff
+    expected' <- safeReadFile $ "../test_outputs" ++ suff
+    let actual = input |> solve |> trimTrailing
+        expected = trimTrailing expected'
+     in if actual == expected
+            then pStr' "test passes\n"
+            else do
+                pStr' "test failed\n"
+                block "Expected" expected
+                block "Actual" actual
+                exit 1
+#endif
+#else
+main = do
+    pStr' "essential variables not defined"
     exit 1
 #endif

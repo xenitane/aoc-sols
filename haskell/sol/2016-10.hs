@@ -1,24 +1,30 @@
 {-# LANGUAGE CPP #-}
 
-import Data.List (sort)
-import Data.Map
-    ( Map
-    , delete
-    , empty
-    , foldlWithKey
-    , insert
-    , insertWith
-    , lookup
-    , toList
+import Lib
+    ( Pair
+    , ($*)
+    , (*$)
+    , (*$*)
+    , (=:>)
+    , (|>)
+    , block
+    , boths
+    , exit
+    , logId
+    , pStr
+    , pStr'
+    , pairToStr
+    , sLogId
+    , safeReadFile
+    , setAt
+    , trimTrailing
     )
+
+import Data.List (sort)
+import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Lib (exit, pairToStr, safeReadFile, trimTrailing)
-import System.Environment (lookupEnv)
-import System.Exit (ExitCode(ExitFailure), exitWith)
-
-type Pair a = (a, a)
 
 desiredChips :: Pair Int
 desiredChips = (17, 61)
@@ -29,12 +35,12 @@ solve input = pairToStr (first, second)
     first = findProcessorBot desiredChips Map.empty instructionsAndState
     second =
         let mulFunc k v =
-                let vv = (head . ([1 | k >= 3] ++) . Set.elems) v
+                let vv = v |> Set.elems |> ([1 | k >= 3] ++) |> head
                  in (* vv)
-         in (Map.foldrWithKey mulFunc 1 . computefinalOutputs Map.empty)
-                instructionsAndState
+         in instructionsAndState |> computefinalOutputs Map.empty |>
+            Map.foldrWithKey mulFunc 1
     instructionsAndState =
-        (foldl makeInstructionsAndState (Map.empty, Map.empty) . lines) input
+        input |> lines |> foldl makeInstructionsAndState (Map.empty, Map.empty)
 
 computefinalOutputs ::
        Map Int (Set Int)
@@ -64,13 +70,14 @@ doInstruction ::
     -> Pair (Map Int (Set Int))
     -> (Int, Pair Int, Pair (Map Int (Set Int)))
 doInstruction instructions (outputs, state) =
-    case (Map.toList . Map.filter ((== 2) . Set.size)) state of
+    case state |> Map.filter (Set.size =:> (== 2)) |> Map.toList of
         ((botId, chips):_) ->
             let [chip, chip'] = Set.elems chips
                 Just (kindTarget, kindTarget') = Map.lookup botId instructions
                 (outputs', state') =
-                    (moveChip kindTarget' chip' . moveChip kindTarget chip)
-                        (outputs, Map.delete botId state)
+                    (outputs, Map.delete botId state) |>
+                    moveChip kindTarget chip |>
+                    moveChip kindTarget' chip'
              in (botId, (chip, chip'), (outputs', state'))
         [] -> (-1, (0, 0), (outputs, state))
 
@@ -109,52 +116,33 @@ addStateValue state [chipStr, _, _, _, botStr] =
     Map.insertWith
         Set.union
         (read botStr)
-        ((Set.singleton . read) chipStr)
+        (chipStr |> read |> Set.singleton)
         state
-
-inputFilePath :: FilePath
-inputFilePath = "../inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testInputFilePath :: FilePath
-testInputFilePath = "../test_inputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-testOutputFilePath :: FilePath
-testOutputFilePath = "../test_outputs/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-
-runNormalMode :: IO ()
-runNormalMode = do
-    input <- safeReadFile inputFilePath
-    (putStr . solve) input
-
-runTestMode :: IO ()
-runTestMode = do
-    input <- safeReadFile testInputFilePath
-    expectedIO <- safeReadFile testOutputFilePath
-    let expected = trimTrailing expectedIO
-    let actual = (trimTrailing . solve) input
-    if actual == expected
-        then putStrLn "test passed"
-        else do
-            putStrLn "test failed"
-            putStrLn "Expected:"
-            putStrLn "--------------"
-            putStrLn expected
-            putStrLn "--------------"
-            putStrLn "Got:"
-            putStrLn "--------------"
-            putStrLn actual
-            putStrLn "--------------"
-            exit 1
 
 main :: IO ()
 #if defined YEAR && defined DAY
+suff :: FilePath
+suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
+#if !defined TEST_MODE
 main = do
-    testMode <- lookupEnv "TEST_MODE"
-    case testMode of
-        Just "1" -> runTestMode
-        _ -> runNormalMode
+    input <- safeReadFile $ "../inputs" ++ suff
+    input |> solve |> pStr
 #else
 main = do
-    putStrLn "essential variables not defined"
+    input <- safeReadFile $ "../test_inputs" ++ suff
+    expected' <- safeReadFile $ "../test_outputs" ++ suff
+    let actual = input |> solve |> trimTrailing
+        expected = trimTrailing expected'
+     in if actual == expected
+            then pStr' "test passes\n"
+            else do
+                pStr' "test failed\n"
+                block "Expected" expected
+                block "Actual" actual
+                exit 1
+#endif
+#else
+main = do
+    pStr' "essential variables not defined"
     exit 1
 #endif
