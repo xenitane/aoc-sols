@@ -7,6 +7,7 @@
 ```plaintext
 aoc-sols/
 |- inputs/
+|- outputs/
 |- test_inputs/
 |  |- YYYY-DD.txt
 |- test_outputs/
@@ -17,6 +18,7 @@ aoc-sols/
 |- readme.md
 |- <language>/
 |  |- run*
+|  |- template.<ext>
 |  |- sol/
 |  |  |- YYYY-DD.<ext>
 ```

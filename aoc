@@ -82,7 +82,7 @@ new)
         touch inputs/$year-$day.txt
     fi
     if [[ ! -f $language/sol/$year-$day.${lang_ext[$language]} ]]; then
-        cp templates/template.${lang_ext[$language]} $language/sol/$year-$day.${lang_ext[$language]}
+        cp ${language}/template.${lang_ext[$language]} $language/sol/$year-$day.${lang_ext[$language]}
     fi
     exit 0
     ;;
