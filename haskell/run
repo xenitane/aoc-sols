@@ -11,8 +11,7 @@ flags="-DYEAR=\"$year\" -DDAY=\"$day\""
 case $mode in
 test) runghc -DTEST_MODE -DYEAR=\"$year\" -DDAY=\"$day\" -i./sol/lib ./sol/${year}-${day}.hs ;;
 run)
-    >/dev/null ghc -dynamic -DYEAR=\"$year\" -DDAY=\"$day\" -i./sol/lib -O2 ./sol/${year}-${day}.hs -o ./hs-out/${year}-${day}
-    ./hs-out/${year}-${day} | tee ../outputs/$year-$day.txt
+    ghc -dynamic -DYEAR=\"$year\" -DDAY=\"$day\" -i./sol/lib -O2 ./sol/${year}-${day}.hs -o ./hs-out/${year}-${day} && ./hs-out/${year}-${day} | tee ../outputs/$year-$day.txt
     ;;
 *)
     >&2 echo unreachable
