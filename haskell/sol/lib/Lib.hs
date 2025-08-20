@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP #-}
-
 module Lib where
 
 import Control.Exception (IOException, evaluate, try)
@@ -77,16 +75,11 @@ f =:> g = \x -> g (f x)
 infixl 9 =:>
 
 sLogId :: Show a => String -> a -> a
-logId :: Show a => a -> a
-#if defined TEST_MODE
 sLogId msg val = trace (msg ++ ": " ++ show val) val
 
+logId :: Show a => a -> a
 logId val = trace (show val) val
-#else
-sLogId _ val = val
 
-logId val = val
-#endif
 pStr :: String -> IO ()
 pStr = hPutStr stdout
 
