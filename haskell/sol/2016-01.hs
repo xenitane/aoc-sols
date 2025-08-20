@@ -81,7 +81,7 @@ main = do
     let actual = input |> solve |> trimTrailing
         expected = trimTrailing expected'
      in if actual == expected
-            then pStr' "test passes\n"
+            then pStr' "test passed\n"
             else do
                 pStr' "test failed\n"
                 block "Expected" expected
