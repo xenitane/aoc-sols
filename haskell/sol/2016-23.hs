@@ -25,8 +25,8 @@ import Data.Char (isLower, ord)
 solve :: String -> String
 solve input = (first, second) |> pairToStr
   where
-    -- look at the puzzle input for patterns and you'll find multiplication
-    -- so modify the input for that
+    -- * look at the puzzle input for patterns and you'll find multiplication
+    -- * so modify the input for that
     (first, second) =
         let instructions = input |> lines |> map (words =:> makeInstruction)
             f x = runInstruction 0 [x, 0, 0, 0] instructions |> head
