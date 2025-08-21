@@ -45,8 +45,8 @@ revertInstruction (x:xs) pass = revertInstruction xs pass'
                 let n' = mod n (length pass)
                  in if dir
                         then let pass' = reverse pass
-                              in ((drop n' pass') ++ (take n' pass')) |> reverse
-                        else (drop n' pass) ++ (take n' pass)
+                              in (drop n' pass' ++ take n' pass') |> reverse
+                        else drop n' pass ++ take n' pass
             RotC c ->
                 let Just x = elemIndex c pass
                     shift =
@@ -55,14 +55,14 @@ revertInstruction (x:xs) pass = revertInstruction xs pass'
                             x'
                                 | even x' -> 5 + div x 2
                                 | otherwise -> 1 + div x 2
-                 in (drop shift pass) ++ (take shift pass)
+                 in drop shift pass ++ take shift pass
             Rev (x, y) ->
                 let prefix = take x pass
                     suffix = drop (y + 1) pass
                     seg = pass |> take (y + 1) |> drop x |> reverse
                  in prefix ++ seg ++ suffix
             Mov (y, x) ->
-                let pass' = (take x pass) ++ (drop (x + 1) pass)
+                let pass' = take x pass ++ drop (x + 1) pass
                     char = pass !! x
                     prefix = take y pass'
                     suffix = drop y pass'
@@ -83,21 +83,21 @@ runInstruction (x:xs) pass = runInstruction xs pass'
             RotN (dir, n) ->
                 let n' = mod n (length pass)
                  in if dir
-                        then (drop n' pass) ++ (take n' pass)
+                        then drop n' pass ++ take n' pass
                         else let pass' = reverse pass
-                              in ((drop n' pass') ++ (take n' pass')) |> reverse
+                              in (drop n' pass' ++ take n' pass') |> reverse
             RotC c ->
                 let Just x = elemIndex c pass
                     x' = mod (x + 1 + head ([1 | x > 3] ++ [0])) (length pass)
                     pass' = reverse pass
-                 in ((drop x' pass') ++ (take x' pass')) |> reverse
+                 in (drop x' pass' ++ take x' pass') |> reverse
             Rev (x, y) ->
                 let prefix = take x pass
                     suffix = drop (y + 1) pass
                     seg = pass |> take (y + 1) |> drop x |> reverse
                  in prefix ++ seg ++ suffix
             Mov (x, y) ->
-                let pass' = (take x pass) ++ (drop (x + 1) pass)
+                let pass' = take x pass ++ drop (x + 1) pass
                     char = pass !! x
                     prefix = take y pass'
                     suffix = drop y pass'
