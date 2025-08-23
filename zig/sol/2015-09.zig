@@ -18,7 +18,7 @@ const Perm = struct {
         var end = self.seq.len - 1;
         while (end > 0) : (end -= 1) {
             if (self.seq[end - 1] < self.seq[end]) {
-                std.sort.block(usize, self.seq[end..], {}, std.sort.asc(usize));
+                std.mem.reverse(usize, self.seq[end..]);
                 const sp = blk: {
                     var l = end;
                     var r = self.seq.len - 1;

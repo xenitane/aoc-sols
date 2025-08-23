@@ -20,8 +20,9 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
         var aba = false;
         var two_pairs = false;
         var pair_set = std.AutoArrayHashMapUnmanaged(u16, bool).empty;
-        try pair_set.put(ac, f2U8ToU16(line[0], line[1]), false);
         defer pair_set.deinit(ac);
+
+        try pair_set.put(ac, f2U8ToU16(line[0], line[1]), false);
 
         while (win.next()) |seg| {
             vc += isVowel(seg[2]);

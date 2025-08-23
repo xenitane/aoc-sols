@@ -54,7 +54,7 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
     res.first = try solveExpression(ac, &expressions, &values, "a");
 
     values.clearAndFree(ac);
-    try expressions.put(ac, "b", .{ .NOP = .{ .raw = res.first } });
+    try values.put(ac, "b", res.first);
 
     res.second = try solveExpression(ac, &expressions, &values, "a");
 

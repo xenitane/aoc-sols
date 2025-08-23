@@ -6,15 +6,14 @@ fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
     var res = Result{ .first = 0, .second = 0 };
 
     var visited = [_]PosSet{ PosSet.empty, PosSet.empty };
-
-    for (0..visited.len) |i| {
-        try visited[i].put(ac, .{ 0, 0 }, {});
-    }
-
     defer {
         for (0..visited.len) |i| {
             visited[i].deinit(ac);
         }
+    }
+
+    for (0..visited.len) |i| {
+        try visited[i].put(ac, .{ 0, 0 }, {});
     }
 
     var positions = [_]V2{.{ 0, 0 }} ** 3;
