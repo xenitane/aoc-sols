@@ -38,6 +38,7 @@ aoc-sols/
   | Language | Toolchain                                                |
   | :------- | :------------------------------------------------------- |
   | haskell  | [Glasgow Haskell Compiler](https://www.haskell.org/ghc/) |
+  | rust     | [Rust Compiler Toolchain](https://rustup.rs/)            |
   | zig      | [Zig Compiler Toolchain](https://ziglang.org)            |
 
 ## Usage Instructions

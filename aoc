@@ -2,6 +2,7 @@
 
 declare -rA lang_ext=(
     ["haskell"]="hs"
+    ["rust"]="rs"
     ["zig"]="zig"
 )
 
