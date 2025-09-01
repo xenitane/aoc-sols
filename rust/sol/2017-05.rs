@@ -6,11 +6,11 @@ fn solve(input: &str) -> Result<(u32, u32), ()> {
 
     let uo0 = |_: i32| 1;
     let uo1 = |offset: i32| if offset >= 3 { -1 } else { 1 };
-    let uof = [uo0, uo1];
+    let update_offset_fns = [uo0, uo1];
 
     let mut res = [0, 0];
 
-    for (i, ff) in uof.iter().enumerate() {
+    for (i, ff) in update_offset_fns.iter().enumerate() {
         let mut jumps = o_jumps.clone();
         let mut idx = 0i32;
         let mut steps = 0u32;

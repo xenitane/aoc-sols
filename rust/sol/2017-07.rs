@@ -12,16 +12,16 @@ fn make_trees(
     info: &mut std::collections::HashMap<&str, (u32, Option<Vec<&str>>)>,
     trees: &mut std::collections::HashMap<&str, Tree>,
 ) -> Tree {
-    let (weight, ch_op) = info.remove(key).unwrap();
+    let Some((weight, ch_op)) = info.remove(key) else {
+        unreachable!()
+    };
     let sub_trees = match ch_op {
         Some(children) => {
             let mut res = Vec::new();
             for ch in children {
-                let subtree = if let Some(st) = trees.remove(ch) {
-                    st
-                } else {
-                    make_trees(ch, info, trees)
-                };
+                let subtree = trees
+                    .remove(ch)
+                    .unwrap_or_else(|| make_trees(ch, info, trees));
                 res.push(subtree);
             }
             Some(res)
@@ -89,12 +89,16 @@ fn solve(input: &str) -> Result<(&str, u32), ()> {
         .collect();
 
     let mut trees = std::collections::HashMap::new();
-    while tree_info.len() > 0 {
-        let (&key, _) = tree_info.iter().next().unwrap();
+    while !tree_info.is_empty() {
+        let Some((&key, _)) = tree_info.iter().next() else {
+            unreachable!()
+        };
         let tree = make_trees(key, &mut tree_info, &mut trees);
         trees.insert(key, tree);
     }
-    let (&first, tree) = trees.iter().next().unwrap();
+    let Some((&first, tree)) = trees.iter().next() else {
+        unreachable!()
+    };
     let (Some(second), _) = rectify_tree(&tree) else {
         unreachable!()
     };

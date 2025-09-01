@@ -28,13 +28,13 @@ fn solve(input: &str) -> Result<(u32, u32), ()> {
         };
         let mut step = 1;
         'outer: loop {
-            let aaa = [
+            let meta_moves = [
                 (step, 1, 0),
                 (step, 0, -1),
                 (step + 1, -1, 0),
                 (step + 1, 0, 1),
             ];
-            for (s, dx, dy) in aaa {
+            for (s, dx, dy) in meta_moves {
                 for _ in 0..s {
                     pos = (pos.0 + dx, pos.1 + dy);
                     let val = next(pos, &hm);

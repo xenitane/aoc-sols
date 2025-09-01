@@ -7,11 +7,11 @@ fn process_garbage(idx: &mut usize, input: &[u8], garbage: &mut u32) {
     *idx += 1;
     while *idx < input.len() && input[*idx] != 0x3e {
         if input[*idx] == 0x21 {
-            *idx += 2;
+            *idx += 1;
         } else {
             *garbage += 1;
-            *idx += 1;
         }
+        *idx += 1;
     }
 }
 

@@ -25,7 +25,6 @@ fn knot_hash(seq: &mut [u16; 256], lengths: &[usize], rounds: usize) {
                     seq[i] = temp_seq[i + 256 - idx];
                 }
             }
-
             idx = (idx + *len + skips) % 256;
             skips += 1;
         }
