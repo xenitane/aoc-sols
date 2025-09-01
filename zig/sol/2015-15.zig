@@ -7,11 +7,12 @@ const IngredientStat = enum(u8) {
     calories = 4,
 };
 
-const Result = lib.Result(isize, isize);
-fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
-    var res = Result{ .first = 0, .second = 0 };
+const SPOONS = 100;
+const TARGET_CALORIES = 500;
 
-    const SPOONS = 100;
+const Result = lib.Result(isize, isize);
+pub fn solve(ac: std.mem.Allocator, file_content: []const u8) !Result {
+    var res = Result{ .first = 0, .second = 0 };
 
     var ingredients = std.ArrayListUnmanaged(Ingredient).empty;
     defer ingredients.deinit(ac);
@@ -52,7 +53,7 @@ fn findMaxScore(ingredients: []const Ingredient, spoons: usize, cur: Ingredient,
         };
         if (value > 0) {
             first.* = @max(first.*, value);
-            if (cur[4] == 500) {
+            if (cur[4] == TARGET_CALORIES) {
                 second.* = @max(second.*, value);
             }
         }
@@ -74,45 +75,4 @@ inline fn scaleVec(ing: Ingredient, scale: isize) Ingredient {
 }
 
 const std = @import("std");
-const lib = @import("lib/root.zig");
-const opts = @import("opts");
-
-pub fn main() !void {
-    var da = std.heap.DebugAllocator(.{}).init;
-    defer {
-        if (da.deinit() == std.heap.Check.leak) {
-            @panic("!!!memory leak detected!!!\n");
-        }
-    }
-
-    const ac = da.allocator();
-
-    const file_content = try lib.util.readEntireFile(ac, opts.input_file_path);
-    defer ac.free(file_content);
-
-    const res = try solve(ac, file_content);
-    try res.print(std.io.getStdOut().writer());
-}
-
-test solve {
-    const ally = std.testing.allocator;
-
-    const in_file_content = try lib.util.readEntireFile(ally, opts.test_input_file_path);
-    defer ally.free(in_file_content);
-    const out_file_content = try lib.util.readEntireFile(ally, opts.test_output_file_path);
-    defer ally.free(out_file_content);
-
-    const res = try solve(ally, in_file_content);
-    var string_builder = std.ArrayList(u8).init(ally);
-    defer string_builder.deinit();
-    try res.print(string_builder.writer());
-
-    while (string_builder.getLastOrNull()) |elem| {
-        if (!std.ascii.isWhitespace(elem)) {
-            break;
-        }
-        _ = string_builder.pop();
-    }
-
-    try std.testing.expectEqualStrings(out_file_content, string_builder.items);
-}
+const lib = @import("../extra/lib.zig");

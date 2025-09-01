@@ -4,45 +4,24 @@ const Build = std.Build;
 pub fn build(b: *Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
+    const exe_name = b.option([]const u8, "exe", "") orelse @panic("needed");
 
-    var dir = try std.fs.cwd().openDir("sol", .{ .iterate = true });
-    defer dir.close();
-    var it = dir.iterate();
-    while (try it.next()) |entry| {
-        if (entry.kind != .file or !std.mem.endsWith(u8, entry.name, ".zig")) {
-            continue;
-        }
-        const base = entry.name[0 .. entry.name.len - 4];
-        const file_path = b.pathJoin(&.{ "sol", entry.name });
+    const exe_mod = b.createModule(.{
+        .root_source_file = b.path("main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
 
-        const opts = b.addOptions();
-        opts.addOption([]const u8, "input_file_path", b.fmt("../inputs/{s}.txt", .{base}));
-        opts.addOption([]const u8, "test_input_file_path", b.fmt("../test_inputs/{s}.txt", .{base}));
-        opts.addOption([]const u8, "test_output_file_path", b.fmt("../test_outputs/{s}.txt", .{base}));
+    const exe = b.addExecutable(.{ .root_module = exe_mod, .name = exe_name });
 
-        const exe_mod = b.createModule(.{
-            .root_source_file = b.path(file_path),
-            .target = target,
-            .optimize = optimize,
-        });
-        exe_mod.addImport("opts", opts.createModule());
+    const install_step = b.addInstallArtifact(exe, .{});
+    const run_exe_step = b.addRunArtifact(exe);
 
-        {
-            const exe = b.addExecutable(.{ .root_module = exe_mod, .name = base });
+    const run_step = b.step("run", "run the built executable");
 
-            const install_step = b.addInstallArtifact(exe, .{});
-            const run_exe_step = b.addRunArtifact(exe);
+    run_step.dependOn(&install_step.step);
+    run_step.dependOn(&run_exe_step.step);
 
-            const step_name = b.fmt("run-{s}", .{base});
-            const run_step = b.step(step_name, step_name);
-
-            run_step.dependOn(&install_step.step);
-            run_step.dependOn(&run_exe_step.step);
-        }
-        {
-            const run_exe_unit_test_step = b.addRunArtifact(b.addTest(.{ .root_module = exe_mod }));
-            const step_name = b.fmt("test-{s}", .{base});
-            b.step(step_name, step_name).dependOn(&run_exe_unit_test_step.step);
-        }
-    }
+    const run_exe_unit_test_step = b.addRunArtifact(b.addTest(.{ .root_module = exe_mod }));
+    b.step("test", "test the solution").dependOn(&run_exe_unit_test_step.step);
 }

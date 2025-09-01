@@ -1,36 +1,36 @@
-const PlayerEquipemnt = struct {
-    const Equipment = @Vector(3, u16);
+const Equipment = @Vector(3, u16);
 
-    const WEAPONS = [_]Equipment{
-        .{ 8, 4, 0 },
-        .{ 10, 5, 0 },
-        .{ 25, 6, 0 },
-        .{ 40, 7, 0 },
-        .{ 74, 8, 0 },
-    };
+const WEAPONS = [_]Equipment{
+    .{ 8, 4, 0 },
+    .{ 10, 5, 0 },
+    .{ 25, 6, 0 },
+    .{ 40, 7, 0 },
+    .{ 74, 8, 0 },
+};
 
-    const ARMOR = [_]Equipment{
-        .{ 13, 0, 1 },
-        .{ 31, 0, 2 },
-        .{ 53, 0, 3 },
-        .{ 75, 0, 4 },
-        .{ 102, 0, 5 },
-    };
+const ARMOR = [_]Equipment{
+    .{ 13, 0, 1 },
+    .{ 31, 0, 2 },
+    .{ 53, 0, 3 },
+    .{ 75, 0, 4 },
+    .{ 102, 0, 5 },
+};
 
-    const RINGS = [_]Equipment{
-        .{ 25, 1, 0 },
-        .{ 50, 2, 0 },
-        .{ 100, 3, 0 },
-        .{ 20, 0, 1 },
-        .{ 40, 0, 2 },
-        .{ 80, 0, 3 },
-    };
+const RINGS = [_]Equipment{
+    .{ 25, 1, 0 },
+    .{ 50, 2, 0 },
+    .{ 100, 3, 0 },
+    .{ 20, 0, 1 },
+    .{ 40, 0, 2 },
+    .{ 80, 0, 3 },
+};
 
+const PlayerEquipment = struct {
     a: u8 = 0,
     b: ?u8 = null,
     c: [2]?u8 = .{ null, null },
 
-    fn val(self: PlayerEquipemnt) Equipment {
+    fn val(self: PlayerEquipment) Equipment {
         var res: Equipment = WEAPONS[self.a];
         if (self.b) |_b| {
             res += ARMOR[_b];
@@ -44,7 +44,7 @@ const PlayerEquipemnt = struct {
         return res;
     }
 
-    fn next(self: *PlayerEquipemnt) bool {
+    fn next(self: *PlayerEquipment) bool {
         if (null == self.c[0]) {
             self.c[0] = 0;
             return true;
@@ -84,7 +84,7 @@ const PlayerStat = struct {
 };
 
 const Result = lib.Result(usize, usize);
-fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
+pub fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
     var res = Result{ .first = std.math.maxInt(usize), .second = 0 };
 
     const boss_stats = blk: {
@@ -103,7 +103,7 @@ fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
         break :blk boss_stats;
     };
 
-    var player_equipment = PlayerEquipemnt{};
+    var player_equipment = PlayerEquipment{};
 
     while (true) {
         var player_stats = PlayerStat{};
@@ -132,45 +132,4 @@ inline fn conductMatch(p0: PlayerStat, p1: PlayerStat) bool {
 }
 
 const std = @import("std");
-const lib = @import("lib/root.zig");
-const opts = @import("opts");
-
-pub fn main() !void {
-    var da = std.heap.DebugAllocator(.{}).init;
-    defer {
-        if (da.deinit() == std.heap.Check.leak) {
-            @panic("!!!memory leak detected!!!\n");
-        }
-    }
-
-    const ac = da.allocator();
-
-    const file_content = try lib.util.readEntireFile(ac, opts.input_file_path);
-    defer ac.free(file_content);
-
-    const res = try solve(ac, file_content);
-    try res.print(std.io.getStdOut().writer());
-}
-
-test solve {
-    const ally = std.testing.allocator;
-
-    const in_file_content = try lib.util.readEntireFile(ally, opts.test_input_file_path);
-    defer ally.free(in_file_content);
-    const out_file_content = try lib.util.readEntireFile(ally, opts.test_output_file_path);
-    defer ally.free(out_file_content);
-
-    const res = try solve(ally, in_file_content);
-    var string_builder = std.ArrayList(u8).init(ally);
-    defer string_builder.deinit();
-    try res.print(string_builder.writer());
-
-    while (string_builder.getLastOrNull()) |elem| {
-        if (!std.ascii.isWhitespace(elem)) {
-            break;
-        }
-        _ = string_builder.pop();
-    }
-
-    try std.testing.expectEqualStrings(out_file_content, string_builder.items);
-}
+const lib = @import("../extra/lib.zig");

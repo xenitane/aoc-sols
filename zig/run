@@ -4,11 +4,18 @@ mode=$1
 year=$2
 day=$3
 
+command cat >extra/Opts.zig <<OPTS
+pub const input_file_path: []const u8="../inputs/${year}-${day}.txt";
+pub const test_input_file_path: []const u8="../test_inputs/${year}-${day}.txt";
+pub const test_output_file_path: []const u8="../test_outputs/${year}-${day}.txt";
+pub const solve = @import("../sol/${year}-${day}.zig").solve;
+OPTS
+
 case $mode in
-test) zig build test-${year}-${day} ;;
-run) zig build -Drelease run-${year}-${day} | tee ../outputs/$year-$day.txt ;;
+test) zig build test -Dexe="${year}-${day}" ;;
+run) zig build -Drelease -Dexe="${year}-${day}" && ./zig-out/bin/${year}-${day} | tee ../outputs/$year-$day.txt ;;
 *)
-    >&2 echo unreachable
-    exit 1
-    ;;
+	>&2 echo unreachable
+	exit 1
+	;;
 esac
