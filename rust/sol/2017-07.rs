@@ -1,6 +1,5 @@
-#![allow(special_module_name)]
-
 use std::cmp::Ordering;
+use std::collections::HashMap;
 
 struct Tree {
     weight: u32,
@@ -9,15 +8,15 @@ struct Tree {
 
 fn make_trees(
     key: &str,
-    info: &mut std::collections::HashMap<&str, (u32, Option<Vec<&str>>)>,
-    trees: &mut std::collections::HashMap<&str, Tree>,
+    info: &mut HashMap<&str, (u32, Option<Vec<&str>>)>,
+    trees: &mut HashMap<&str, Tree>,
 ) -> Tree {
     let Some((weight, ch_op)) = info.remove(key) else {
         unreachable!()
     };
     let sub_trees = match ch_op {
         Some(children) => {
-            let mut res = Vec::new();
+            let mut res = vec![];
             for ch in children {
                 let subtree = trees
                     .remove(ch)
@@ -39,7 +38,7 @@ fn rectify_tree(tree: &Tree) -> (Option<u32>, u32) {
         None => (None, tree.weight),
         Some(chv) => {
             let mut w = tree.weight;
-            let mut map = std::collections::HashMap::new();
+            let mut map = HashMap::new();
             for ch in chv {
                 let (rectified_weight_op, sub_tree_weight) = rectify_tree(ch);
                 if let Some(nw) = rectified_weight_op {
@@ -69,8 +68,8 @@ fn rectify_tree(tree: &Tree) -> (Option<u32>, u32) {
     }
 }
 
-fn solve(input: &str) -> Result<(&str, u32), ()> {
-    let mut tree_info: std::collections::HashMap<_, _> = input
+pub fn solve(input: &str) -> Result<(&str, u32), ()> {
+    let mut tree_info: HashMap<_, _> = input
         .lines()
         .map(|line| {
             let mut tokens = line.split(&[' ', ',', '(', ')']).filter(|s| !s.is_empty());
@@ -79,7 +78,7 @@ fn solve(input: &str) -> Result<(&str, u32), ()> {
             if tokens.next() == None {
                 (key, (weight, None))
             } else {
-                let mut children_keys = Vec::new();
+                let mut children_keys = vec![];
                 while let Some(ch) = tokens.next() {
                     children_keys.push(ch);
                 }
@@ -88,7 +87,7 @@ fn solve(input: &str) -> Result<(&str, u32), ()> {
         })
         .collect();
 
-    let mut trees = std::collections::HashMap::new();
+    let mut trees = HashMap::new();
     while !tree_info.is_empty() {
         let Some((&key, _)) = tree_info.iter().next() else {
             unreachable!()
@@ -104,47 +103,4 @@ fn solve(input: &str) -> Result<(&str, u32), ()> {
     };
 
     Ok((first, second))
-}
-
-pub mod lib;
-pub mod opts;
-
-use lib::PrintablePair;
-use std::io;
-
-fn main() -> Result<(), ()> {
-    let input = lib::read_entire_file(opts::INPUT_FILE_PATH)?;
-    let res = solve(&input)?;
-    res.print_to(&mut io::stdout())?;
-    Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn aa() -> Result<(), ()> {
-        let input = lib::read_entire_file(opts::TEST_INPUT_FILE_PATH)?;
-        let expected = lib::read_entire_file(opts::TEST_OUTPUT_FILE_PATH)?;
-        let res = solve(&input)?;
-        let mut buffer = String::new();
-        res.print_to(&mut buffer)?;
-        assert_eq!(
-            expected.trim(),
-            buffer.trim(),
-            r#"Expected:
---------------------------------
-{}
---------------------------------
-Actual:
---------------------------------
-{}
---------------------------------
-"#,
-            expected.trim(),
-            buffer.trim()
-        );
-        Ok(())
-    }
 }

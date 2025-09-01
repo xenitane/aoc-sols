@@ -1,2 +1,2 @@
 build/
-sol/opts/*.rs
+extra/opts.rs

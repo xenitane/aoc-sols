@@ -1,9 +1,4 @@
-#![allow(dead_code, unused_variables)]
-use std::fs;
-use std::path::Path;
-
-// use std::fmt::Write as FmtWrite;
-use std::io::Write as IoWrite;
+use std::{fs, io::Write as IoWrite, path::Path};
 
 pub trait MyWriter {
     fn write_str(&mut self, s: &str) -> Result<(), ()>;
@@ -38,7 +33,7 @@ trait Printable {
 }
 
 impl Printable for () {
-    fn fmt_to(self: &Self, writer: &mut dyn MyWriter) -> Result<(), ()> {
+    fn fmt_to(self: &Self, _: &mut dyn MyWriter) -> Result<(), ()> {
         Ok(())
     }
 }

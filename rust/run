@@ -4,21 +4,25 @@ mode=$1
 year=$2
 day=$3
 
-command cat >./sol/opts/mod.rs <<EOF
-#![allow(dead_code, unused_variables)]
+command cat >./extra/opts.rs <<OPTS
 pub const INPUT_FILE_PATH: &str = "../inputs/${year}-${day}.txt";
 pub const TEST_INPUT_FILE_PATH: &str = "../test_inputs/${year}-${day}.txt";
 pub const TEST_OUTPUT_FILE_PATH: &str = "../test_outputs/${year}-${day}.txt";
-EOF
+
+#[path = "../sol/${year}-${day}.rs"]
+pub mod sol;
+OPTS
 
 mkdir -p build
 
 case $mode in
 test)
-	rustc --test -o build/${year}-${day}-test sol/${year}-${day}.rs && ./build/${year}-${day}-test
+	rustc -O --test -o build/${year}-${day}-test main.rs &&
+		./build/${year}-${day}-test
 	;;
 run)
-	rustc -o build/${year}-${day}-test sol/${year}-${day}.rs && ./build/${year}-${day}-test | tee ../outputs/$year-$day.txt
+	rustc -O -o build/${year}-${day}-test main.rs &&
+		./build/${year}-${day}-test | tee ../outputs/$year-$day.txt
 	;;
 *)
 	>&2 echo unreachable

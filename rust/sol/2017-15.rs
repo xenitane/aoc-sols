@@ -1,5 +1,3 @@
-#![allow(special_module_name)]
-
 fn next(cur: u32, factor: u32) -> u32 {
     let mut res = 1u64;
     res *= cur as u64;
@@ -8,7 +6,7 @@ fn next(cur: u32, factor: u32) -> u32 {
     res as u32
 }
 
-fn solve(input: &str) -> Result<(u32, u32), ()> {
+pub fn solve(input: &str) -> Result<(u32, u32), ()> {
     let (af, bf) = (16807, 48271);
     let (a, b) = {
         let mut tokens = input
@@ -54,47 +52,4 @@ fn solve(input: &str) -> Result<(u32, u32), ()> {
     };
 
     Ok((first, second))
-}
-
-pub mod lib;
-pub mod opts;
-
-use lib::PrintablePair;
-use std::io;
-
-fn main() -> Result<(), ()> {
-    let input = lib::read_entire_file(opts::INPUT_FILE_PATH)?;
-    let res = solve(&input)?;
-    res.print_to(&mut io::stdout())?;
-    Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn aa() -> Result<(), ()> {
-        let input = lib::read_entire_file(opts::TEST_INPUT_FILE_PATH)?;
-        let expected = lib::read_entire_file(opts::TEST_OUTPUT_FILE_PATH)?;
-        let res = solve(&input)?;
-        let mut buffer = String::new();
-        res.print_to(&mut buffer)?;
-        assert_eq!(
-            expected.trim(),
-            buffer.trim(),
-            r#"Expected:
---------------------------------
-{}
---------------------------------
-Actual:
---------------------------------
-{}
---------------------------------
-"#,
-            expected.trim(),
-            buffer.trim()
-        );
-        Ok(())
-    }
 }

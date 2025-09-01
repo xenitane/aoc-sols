@@ -1,10 +1,7 @@
-#![allow(special_module_name)]
+use std::collections::HashMap;
+use std::collections::HashSet;
 
-fn count_reachable(
-    adj: &std::collections::HashMap<u32, Vec<u32>>,
-    i: u32,
-    vis: &mut std::collections::HashSet<u32>,
-) -> u32 {
+fn count_reachable(adj: &HashMap<u32, Vec<u32>>, i: u32, vis: &mut HashSet<u32>) -> u32 {
     if vis.contains(&i) {
         return 0;
     }
@@ -17,8 +14,8 @@ fn count_reachable(
     res
 }
 
-fn solve(input: &str) -> Result<(u32, u32), ()> {
-    let adj: std::collections::HashMap<_, _> = input
+pub fn solve(input: &str) -> Result<(u32, u32), ()> {
+    let adj: HashMap<_, _> = input
         .lines()
         .map(|line| {
             let mut tokens = line.split(&[' ', ',']).filter(|s| !s.is_empty());
@@ -31,7 +28,7 @@ fn solve(input: &str) -> Result<(u32, u32), ()> {
             (id, v)
         })
         .collect();
-    let mut vis = std::collections::HashSet::new();
+    let mut vis = HashSet::new();
     let first = count_reachable(&adj, 0, &mut vis);
     let second = {
         let mut groups = 1;
@@ -43,47 +40,4 @@ fn solve(input: &str) -> Result<(u32, u32), ()> {
         groups
     };
     Ok((first, second))
-}
-
-pub mod lib;
-pub mod opts;
-
-use lib::PrintablePair;
-use std::io;
-
-fn main() -> Result<(), ()> {
-    let input = lib::read_entire_file(opts::INPUT_FILE_PATH)?;
-    let res = solve(&input)?;
-    res.print_to(&mut io::stdout())?;
-    Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn aa() -> Result<(), ()> {
-        let input = lib::read_entire_file(opts::TEST_INPUT_FILE_PATH)?;
-        let expected = lib::read_entire_file(opts::TEST_OUTPUT_FILE_PATH)?;
-        let res = solve(&input)?;
-        let mut buffer = String::new();
-        res.print_to(&mut buffer)?;
-        assert_eq!(
-            expected.trim(),
-            buffer.trim(),
-            r#"Expected:
---------------------------------
-{}
---------------------------------
-Actual:
---------------------------------
-{}
---------------------------------
-"#,
-            expected.trim(),
-            buffer.trim()
-        );
-        Ok(())
-    }
 }

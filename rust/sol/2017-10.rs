@@ -1,5 +1,3 @@
-#![allow(special_module_name)]
-
 fn knot_hash(seq: &mut [u16; 256], lengths: &[usize], rounds: usize) {
     let mut idx: usize = 0;
     let mut skips: usize = 0;
@@ -31,7 +29,7 @@ fn knot_hash(seq: &mut [u16; 256], lengths: &[usize], rounds: usize) {
     }
 }
 
-fn solve(input: &str) -> Result<(u16, String), ()> {
+pub fn solve(input: &str) -> Result<(u16, String), ()> {
     let first = {
         let mut seq: [u16; 256] = std::array::from_fn(|i| i as u16);
         let lengths: Vec<_> = input
@@ -60,47 +58,4 @@ fn solve(input: &str) -> Result<(u16, String), ()> {
         res
     };
     Ok((first, second))
-}
-
-pub mod lib;
-pub mod opts;
-
-use lib::PrintablePair;
-use std::io;
-
-fn main() -> Result<(), ()> {
-    let input = lib::read_entire_file(opts::INPUT_FILE_PATH)?;
-    let res = solve(&input)?;
-    res.print_to(&mut io::stdout())?;
-    Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn aa() -> Result<(), ()> {
-        let input = lib::read_entire_file(opts::TEST_INPUT_FILE_PATH)?;
-        let expected = lib::read_entire_file(opts::TEST_OUTPUT_FILE_PATH)?;
-        let res = solve(&input)?;
-        let mut buffer = String::new();
-        res.print_to(&mut buffer)?;
-        assert_eq!(
-            expected.trim(),
-            buffer.trim(),
-            r#"Expected:
---------------------------------
-{}
---------------------------------
-Actual:
---------------------------------
-{}
---------------------------------
-"#,
-            expected.trim(),
-            buffer.trim()
-        );
-        Ok(())
-    }
 }

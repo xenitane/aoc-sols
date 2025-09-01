@@ -1,7 +1,7 @@
-#![allow(special_module_name)]
+use std::collections::HashMap;
 
-fn solve(input: &str) -> Result<(u32, u32), ()> {
-    let num = input.parse::<u32>().unwrap();
+pub fn solve(input: &str) -> Result<(u32, u32), ()> {
+    let num: u32 = input.parse().unwrap();
 
     let first = if num == 1 {
         0
@@ -15,9 +15,9 @@ fn solve(input: &str) -> Result<(u32, u32), ()> {
     };
     let second = {
         let mut pos = (0i32, 0i32);
-        let mut hm = std::collections::HashMap::from([(pos, 1u32)]);
+        let mut hm = HashMap::from([(pos, 1u32)]);
         let res: u32;
-        let next = |(x, y), mp: &std::collections::HashMap<_, _>| {
+        let next = |(x, y), mp: &HashMap<_, _>| {
             let mut sum = 0u32;
             for dx in -1..=1 {
                 for dy in -1..=1 {
@@ -51,47 +51,4 @@ fn solve(input: &str) -> Result<(u32, u32), ()> {
     };
 
     Ok((first, second))
-}
-
-pub mod lib;
-pub mod opts;
-
-use lib::PrintablePair;
-use std::io;
-
-fn main() -> Result<(), ()> {
-    let input = lib::read_entire_file(opts::INPUT_FILE_PATH)?;
-    let res = solve(&input)?;
-    res.print_to(&mut io::stdout())?;
-    Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn aa() -> Result<(), ()> {
-        let input = lib::read_entire_file(opts::TEST_INPUT_FILE_PATH)?;
-        let expected = lib::read_entire_file(opts::TEST_OUTPUT_FILE_PATH)?;
-        let res = solve(&input)?;
-        let mut buffer = String::new();
-        res.print_to(&mut buffer)?;
-        assert_eq!(
-            expected.trim(),
-            buffer.trim(),
-            r#"Expected:
---------------------------------
-{}
---------------------------------
-Actual:
---------------------------------
-{}
---------------------------------
-"#,
-            expected.trim(),
-            buffer.trim()
-        );
-        Ok(())
-    }
 }
