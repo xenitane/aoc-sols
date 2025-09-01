@@ -13,7 +13,10 @@ OPTS
 
 case $mode in
 test) zig build test -Dexe="${year}-${day}" ;;
-run) zig build -Drelease -Dexe="${year}-${day}" && ./zig-out/bin/${year}-${day} | tee ../outputs/$year-$day.txt ;;
+run)
+	zig build -Drelease -Dexe="${year}-${day}" &&
+		./zig-out/bin/${year}-${day} | tee ../outputs/$year-$day.txt
+	;;
 *)
 	>&2 echo unreachable
 	exit 1

@@ -1,42 +1,21 @@
-{-# LANGUAGE CPP #-}
+module Sol where
 
 import Lib
-    ( Pair
-    , ($*)
-    , (*$)
-    , (*$*)
-    , (=:>)
-    , (|>)
-    , block
-    , boths
-    , exit
-    , logId
-    , pStr
-    , pStr'
-    , pairToStr
-    , sLogId
-    , safeReadFile
-    , setAt
-    , trimTrailing
-    )
 
-import Data.List (intercalate)
-import Data.List.Split (condense, dropBlanks, dropDelims, oneOf, split)
+import Data.List
+import Data.List.Split
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
-
-infinity :: Int
-infinity = 9223372036854775807
 
 solve :: String -> String
 solve input = pairToStr (first, second)
   where
     (first, second) =
         let mergeFloors floors =
-                replicate (length floors - 1) (Set.empty, Set.empty) ++
-                [foldl (boths Set.union) (Set.empty, Set.empty) floors]
+                replicate (length floors - 1) (Set.empty, Set.empty)
+                    ++ [foldl (boths Set.union) (Set.empty, Set.empty) floors]
             minimumSteps' x =
                 let x' = mergeFloors x
                  in minimumSteps
@@ -46,9 +25,10 @@ solve input = pairToStr (first, second)
          in minimumSteps' $* (floors0, floors1)
     floors1 =
         let mapFunc x = map ((, x) =:> Just) [True, False]
-         in [Map.size elemIds, Map.size elemIds + 1] |> concatMap mapFunc |>
-            foldl (flip addToFloor) (head floors0) |>
-            (: drop 1 floors0)
+         in [Map.size elemIds, Map.size elemIds + 1]
+                |> concatMap mapFunc
+                |> foldl (flip addToFloor) (head floors0)
+                |> (: drop 1 floors0)
     (floors0, elemIds) =
         let splitter =
                 oneOf =:> dropDelims =:> condense =:> dropBlanks =:> split
@@ -63,8 +43,11 @@ minimumSteps ::
 minimumSteps depth (prev, curr) (prev', curr')
     | null curr || null curr' = infinity
     | curr' |> Set.intersection curr |> null |> not = depth
-    | curr |> Set.map buildingStateToStr |> Set.intersection prev' |> null |>
-          not = depth - 1
+    | curr
+          |> Set.map buildingStateToStr
+          |> Set.intersection prev'
+          |> null
+          |> not = depth - 1
     | otherwise =
         minimumSteps
             (depth + 2)
@@ -93,15 +76,20 @@ nextStatesAll prevStates collectedStates (currFloor, materialState) =
         takables =
             [ fst =:> Set.toList =:> map ((True, ) =:> Just)
             , snd =:> Set.toList =:> map ((False, ) =:> Just)
-            ] |>
-            map (currFloorState |>) |>
-            intercalate [Nothing]
+            ]
+                |> map (currFloorState |>)
+                |> intercalate [Nothing]
         mapFunc (i, x) = takables |> drop i |> map (x, )
-     in takables |> zip [1 ..] |> concatMap mapFunc |>
-        foldl
-            (nextStateFromFloorAndTakable prevStates currFloor materialState)
-            Set.empty |>
-        Set.union collectedStates
+     in takables
+            |> zip [1 ..]
+            |> concatMap mapFunc
+            |> foldl
+                   (nextStateFromFloorAndTakable
+                        prevStates
+                        currFloor
+                        materialState)
+                   Set.empty
+            |> Set.union collectedStates
 
 nextStateFromFloorAndTakable ::
        Set String
@@ -113,8 +101,9 @@ nextStateFromFloorAndTakable ::
 nextStateFromFloorAndTakable prevStates currFloor materialState collectedNextStates (t, t') =
     if materialState' |> isFloorValid |> not
         then collectedNextStates
-        else (materialStateDown ++ materialStateUp) |> Set.fromList |>
-             Set.union collectedNextStates
+        else (materialStateDown ++ materialStateUp)
+                 |> Set.fromList
+                 |> Set.union collectedNextStates
   where
     (materialStateDown, materialStateUp) =
         let materialStateGen x =
@@ -124,12 +113,13 @@ nextStateFromFloorAndTakable prevStates currFloor materialState collectedNextSta
                     materials' =
                         nms !! nextFloor |> addToFloor t |> addToFloor t'
                  in [ (nextFloor, nms')
-                    | nextFloor >= 0 &&
-                          nextFloor < length nms &&
-                          isFloorValid materials' &&
-                          ((nextFloor, nms') |> buildingStateToStr |>
-                           flip Set.member prevStates |>
-                           not)
+                    | nextFloor >= 0
+                          && nextFloor < length nms
+                          && isFloorValid materials'
+                          && ((nextFloor, nms')
+                                  |> buildingStateToStr
+                                  |> flip Set.member prevStates
+                                  |> not)
                     ]
          in materialStateGen $* (-1, 1)
     materialState' =
@@ -193,31 +183,3 @@ addGCs elemIds (_:elem:"microchip":toks) =
                 , Map.insert elemName (Map.size elemIdsTemp) elemIdsTemp)
     (floorState, elemIdsTemp) = addGCs elemIds toks
     elemName = takeWhile (/= '-') elem
-
-main :: IO ()
-#if defined YEAR && defined DAY
-suff :: FilePath
-suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-#if !defined TEST_MODE
-main = do
-    input <- safeReadFile $ "../inputs" ++ suff
-    input |> solve |> pStr
-#else
-main = do
-    input <- safeReadFile $ "../test_inputs" ++ suff
-    expected' <- safeReadFile $ "../test_outputs" ++ suff
-    let actual = input |> solve |> trimTrailing
-        expected = trimTrailing expected'
-     in if actual == expected
-            then pStr' "test passed\n"
-            else do
-                pStr' "test failed\n"
-                block "Expected" expected
-                block "Actual" actual
-                exit 1
-#endif
-#else
-main = do
-    pStr' "essential variables not defined"
-    exit 1
-#endif

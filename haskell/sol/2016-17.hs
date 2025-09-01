@@ -1,31 +1,10 @@
-{-# LANGUAGE CPP #-}
+module Sol where
 
 import Lib
-    ( Pair
-    , ($*)
-    , (*$)
-    , (*$*)
-    , (=:>)
-    , (|>)
-    , block
-    , boths
-    , exit
-    , logId
-    , pStr
-    , pStr'
-    , pairToStr
-    , sLogId
-    , safeReadFile
-    , setAt
-    , trimTrailing
-    )
 
-import Crypto.Hash (MD5(..), hashWith)
+import Crypto.Hash
 import qualified Data.ByteString.Char8 as BS
-import Data.Char (ord)
-
-infinity :: Int
-infinity = 9223372036854775807
+import Data.Char
 
 solve :: String -> String
 solve input = (first, second) |> pairToStr
@@ -41,8 +20,10 @@ findShortestPath currLoc (minSteps, minPath) path prefix
     | otherwise =
         let stepable p (s, c) = p ++ [s | ord c > 97]
             nextSteps =
-                (prefix ++ path) |> makeMD5Digest |> zip "UDLR" |>
-                foldl stepable ""
+                (prefix ++ path)
+                    |> makeMD5Digest
+                    |> zip "UDLR"
+                    |> foldl stepable ""
             takeStep r s =
                 let nextLoc = nxtLoc s currLoc
                  in if isOnGrid nextLoc
@@ -57,8 +38,10 @@ findLongestPathLength currLoc steps path prefix
         let stepable str (stepChar, hashChar) =
                 str ++ [stepChar | ord hashChar > 97]
             nextSteps =
-                (prefix ++ path) |> makeMD5Digest |> zip "UDLR" |>
-                foldl stepable ""
+                (prefix ++ path)
+                    |> makeMD5Digest
+                    |> zip "UDLR"
+                    |> foldl stepable ""
             takeStep currSteps stepChar = max currSteps r'
               where
                 r' =
@@ -83,31 +66,3 @@ nxtLoc 'R' (x, y) = (x + 1, y)
 
 makeMD5Digest :: String -> String
 makeMD5Digest = BS.pack =:> hashWith MD5 =:> show =:> take 4
-
-main :: IO ()
-#if defined YEAR && defined DAY
-suff :: FilePath
-suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-#if !defined TEST_MODE
-main = do
-    input <- safeReadFile $ "../inputs" ++ suff
-    input |> solve |> pStr
-#else
-main = do
-    input <- safeReadFile $ "../test_inputs" ++ suff
-    expected' <- safeReadFile $ "../test_outputs" ++ suff
-    let actual = input |> solve |> trimTrailing
-        expected = trimTrailing expected'
-     in if actual == expected
-            then pStr' "test passed\n"
-            else do
-                pStr' "test failed\n"
-                block "Expected" expected
-                block "Actual" actual
-                exit 1
-#endif
-#else
-main = do
-    pStr' "essential variables not defined"
-    exit 1
-#endif

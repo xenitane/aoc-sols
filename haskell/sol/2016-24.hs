@@ -1,26 +1,8 @@
-{-# LANGUAGE CPP #-}
+module Sol where
 
 import Lib
-    ( Pair
-    , ($*)
-    , (*$)
-    , (*$*)
-    , (=:>)
-    , (|>)
-    , block
-    , boths
-    , exit
-    , logId
-    , pStr
-    , pStr'
-    , pairToStr
-    , sLogId
-    , safeReadFile
-    , setAt
-    , trimTrailing
-    )
 
-import Data.List (sort)
+import Data.List
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
@@ -30,13 +12,9 @@ solve :: String -> String
 solve input = (first, second) |> pairToStr
   where
     (first, second) = poi |> Map.size |> findMinDist pairWiseDist
-    -- second = ()
     pairWiseDist = poi |> Map.toList |> concatMap (bfs maze) |> Map.fromList
     (maze, poi) =
         input |> lines |> zip [0 ..] |> foldl makeMaze (Map.empty, Map.empty)
-
-infinity :: Int
-infinity = 9223372036854775807
 
 findMinDist :: Map (Pair Int) Int -> Int -> Pair Int
 findMinDist pwd len = minimizeDist pwd (infinity, infinity) (Just perm)
@@ -81,8 +59,8 @@ permDist pwd arr = (arr ++ [0]) |> ((id, ([0] ++)) *$) |> (permDistInt $*)
 
 bfs :: Map (Pair Int) Char -> (Char, Pair Int) -> [(Pair Int, Int)]
 bfs maze (i, (x0, y0)) =
-    bfsInt maze (Set.empty, Set.singleton (x0, y0)) 0 Map.empty |>
-    map (\(j, k) -> (read @Int $* ([i], [j]), k))
+    bfsInt maze (Set.empty, Set.singleton (x0, y0)) 0 Map.empty
+        |> map (\(j, k) -> (read @Int $* ([i], [j]), k))
 
 bfsInt ::
        Map (Pair Int) Char
@@ -132,31 +110,3 @@ makeMaze (pathWall, posOfInt) (i, row) =
                     then id
                     else Map.insert c (i, j)
      in row |> zip [0 ..] |> foldl foldFunc (pathWall, posOfInt)
-
-main :: IO ()
-#if defined YEAR && defined DAY
-suff :: FilePath
-suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-#if !defined TEST_MODE
-main = do
-    input <- safeReadFile $ "../inputs" ++ suff
-    input |> solve |> pStr
-#else
-main = do
-    input <- safeReadFile $ "../test_inputs" ++ suff
-    expected' <- safeReadFile $ "../test_outputs" ++ suff
-    let actual = input |> solve |> trimTrailing
-        expected = trimTrailing expected'
-     in if actual == expected
-            then pStr' "test passed\n"
-            else do
-                pStr' "test failed\n"
-                block "Expected" expected
-                block "Actual" actual
-                exit 1
-#endif
-#else
-main = do
-    pStr' "essential variables not defined"
-    exit 1
-#endif

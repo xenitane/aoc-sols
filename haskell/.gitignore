@@ -1,3 +1,4 @@
 hs-out
 *.hi
 *.o
+extra/Opts.hs

@@ -1,27 +1,9 @@
-{-# LANGUAGE CPP #-}
+module Sol where
 
 import Lib
-    ( Pair
-    , ($*)
-    , (*$)
-    , (*$*)
-    , (=:>)
-    , (|>)
-    , block
-    , boths
-    , exit
-    , logId
-    , pStr
-    , pStr'
-    , pairToStr
-    , sLogId
-    , safeReadFile
-    , setAt
-    , trimTrailing
-    )
 
-import Data.List (sort)
-import Data.List.Split (splitOn)
+import Data.List
+import Data.List.Split
 
 solve :: String -> String
 solve input = (first, second) |> pairToStr
@@ -52,31 +34,3 @@ findSmallestUnblocked ([a, b]:[c, d]:rest)
     | a > 0 = 0
     | a == 0 && c > b + 1 = b + 1
     | a == 0 && c <= b + 1 = findSmallestUnblocked ([0, max b d] : rest)
-
-main :: IO ()
-#if defined YEAR && defined DAY
-suff :: FilePath
-suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-#if !defined TEST_MODE
-main = do
-    input <- safeReadFile $ "../inputs" ++ suff
-    input |> solve |> pStr
-#else
-main = do
-    input <- safeReadFile $ "../test_inputs" ++ suff
-    expected' <- safeReadFile $ "../test_outputs" ++ suff
-    let actual = input |> solve |> trimTrailing
-        expected = trimTrailing expected'
-     in if actual == expected
-            then pStr' "test passed\n"
-            else do
-                pStr' "test failed\n"
-                block "Expected" expected
-                block "Actual" actual
-                exit 1
-#endif
-#else
-main = do
-    pStr' "essential variables not defined"
-    exit 1
-#endif

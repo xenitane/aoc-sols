@@ -1,26 +1,8 @@
-{-# LANGUAGE CPP #-}
+module Sol where
 
 import Lib
-    ( Pair
-    , ($*)
-    , (*$)
-    , (*$*)
-    , (=:>)
-    , (|>)
-    , block
-    , boths
-    , exit
-    , logId
-    , pStr
-    , pStr'
-    , pairToStr
-    , sLogId
-    , safeReadFile
-    , setAt
-    , trimTrailing
-    )
 
-import Data.List (sort)
+import Data.List
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
@@ -37,8 +19,9 @@ solve input = pairToStr (first, second)
         let mulFunc k v =
                 let vv = v |> Set.elems |> ([1 | k >= 3] ++) |> head
                  in (* vv)
-         in instructionsAndState |> computefinalOutputs Map.empty |>
-            Map.foldrWithKey mulFunc 1
+         in instructionsAndState
+                |> computefinalOutputs Map.empty
+                |> Map.foldrWithKey mulFunc 1
     instructionsAndState =
         input |> lines |> foldl makeInstructionsAndState (Map.empty, Map.empty)
 
@@ -75,9 +58,9 @@ doInstruction instructions (outputs, state) =
             let [chip, chip'] = Set.elems chips
                 Just (kindTarget, kindTarget') = Map.lookup botId instructions
                 (outputs', state') =
-                    (outputs, Map.delete botId state) |>
-                    moveChip kindTarget chip |>
-                    moveChip kindTarget' chip'
+                    (outputs, Map.delete botId state)
+                        |> moveChip kindTarget chip
+                        |> moveChip kindTarget' chip'
              in (botId, (chip, chip'), (outputs', state'))
         [] -> (-1, (0, 0), (outputs, state))
 
@@ -118,31 +101,3 @@ addStateValue state [chipStr, _, _, _, botStr] =
         (read botStr)
         (chipStr |> read |> Set.singleton)
         state
-
-main :: IO ()
-#if defined YEAR && defined DAY
-suff :: FilePath
-suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-#if !defined TEST_MODE
-main = do
-    input <- safeReadFile $ "../inputs" ++ suff
-    input |> solve |> pStr
-#else
-main = do
-    input <- safeReadFile $ "../test_inputs" ++ suff
-    expected' <- safeReadFile $ "../test_outputs" ++ suff
-    let actual = input |> solve |> trimTrailing
-        expected = trimTrailing expected'
-     in if actual == expected
-            then pStr' "test passed\n"
-            else do
-                pStr' "test failed\n"
-                block "Expected" expected
-                block "Actual" actual
-                exit 1
-#endif
-#else
-main = do
-    pStr' "essential variables not defined"
-    exit 1
-#endif

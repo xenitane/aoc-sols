@@ -8,13 +8,32 @@ flags="-DYEAR=\"$year\" -DDAY=\"$day\""
 
 [[ -d "hs-out" ]] || mkdir -p "hs-out"
 
+command cat >extra/Opts.hs <<OPTS
+module Opts where
+
+input_file_path :: FilePath
+input_file_path = "../inputs/${year}-${day}.txt"
+
+test_input_file_path :: FilePath
+test_input_file_path = "../test_inputs/${year}-${day}.txt"
+
+test_output_file_path :: FilePath
+test_output_file_path = "../test_outputs/${year}-${day}.txt"
+OPTS
+
 case $mode in
-test) runghc -DTEST_MODE -DYEAR=\"$year\" -DDAY=\"$day\" -i./sol/lib ./sol/${year}-${day}.hs ;;
+test)
+	ghci -DTEST_MODE -i./extra main.hs sol/${year}-${day}.hs <<CMD
+main
+:q
+CMD
+	;;
 run)
-    ghc -dynamic -DYEAR=\"$year\" -DDAY=\"$day\" -i./sol/lib -O2 ./sol/${year}-${day}.hs -o ./hs-out/${year}-${day} && ./hs-out/${year}-${day} | tee ../outputs/$year-$day.txt
-    ;;
+	ghc -dynamic -O2 -i./extra main.hs sol/${year}-${day}.hs -o ./hs-out/${year}-${day} &&
+		./hs-out/${year}-${day} | tee ../outputs/$year-$day.txt
+	;;
 *)
-    >&2 echo unreachable
-    exit 1
-    ;;
+	>&2 echo unreachable
+	exit 1
+	;;
 esac

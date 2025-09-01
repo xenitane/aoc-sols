@@ -1,26 +1,8 @@
-{-# LANGUAGE CPP #-}
+module Sol where
 
 import Lib
-    ( Pair
-    , ($*)
-    , (*$)
-    , (*$*)
-    , (=:>)
-    , (|>)
-    , block
-    , boths
-    , exit
-    , logId
-    , pStr
-    , pStr'
-    , pairToStr
-    , sLogId
-    , safeReadFile
-    , setAt
-    , trimTrailing
-    )
 
-import Data.List.Split (splitOn)
+import Data.List.Split
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -32,8 +14,9 @@ solve input = pairToStr (first, second)
     first = abs x + abs y
     second = abs x' + abs y'
     ((x, y), Just (x', y'), _, _) =
-        input |> splitOn ", " |>
-        foldl rotateAndMove ((0, 0), Nothing, (0, 1), Set.empty)
+        input
+            |> splitOn ", "
+            |> foldl rotateAndMove ((0, 0), Nothing, (0, 1), Set.empty)
 
 rotateAndMove ::
        (Point, Maybe Point, Point, Set Point)
@@ -65,31 +48,3 @@ moveN n ((x, y), act, (dx, dy), mp) =
                     | Set.member (x', y') mp -> Just (x', y')
                 _ -> Nothing
      in moveN (n - 1) ((x', y'), act', (dx, dy), mp')
-
-main :: IO ()
-#if defined YEAR && defined DAY
-suff :: FilePath
-suff = "/" ++ YEAR ++ "-" ++ DAY ++ ".txt"
-#if !defined TEST_MODE
-main = do
-    input <- safeReadFile $ "../inputs" ++ suff
-    input |> solve |> pStr
-#else
-main = do
-    input <- safeReadFile $ "../test_inputs" ++ suff
-    expected' <- safeReadFile $ "../test_outputs" ++ suff
-    let actual = input |> solve |> trimTrailing
-        expected = trimTrailing expected'
-     in if actual == expected
-            then pStr' "test passed\n"
-            else do
-                pStr' "test failed\n"
-                block "Expected" expected
-                block "Actual" actual
-                exit 1
-#endif
-#else
-main = do
-    pStr' "essential variables not defined"
-    exit 1
-#endif

@@ -1,10 +1,10 @@
 module Lib where
 
-import Control.Exception (IOException, evaluate, try)
-import Data.Char (isSpace)
-import Debug.Trace (trace)
-import System.Exit (ExitCode(ExitFailure), exitWith)
-import System.IO (hPutStr, stderr, stdout)
+import Control.Exception
+import Data.Char
+import Debug.Trace
+import System.Exit
+import System.IO
 
 type Pair a = (a, a)
 
@@ -92,3 +92,6 @@ block title content = do
     pStr' "----------------\n"
     pStr' $ content ++ "\n"
     pStr' "----------------\n"
+
+infinity :: Int
+infinity = 9223372036854775807
