@@ -1,3 +1,3 @@
-fn solve(input: &str) -> Result<((), ()), ()> {
+pub fn solve(input: &str) -> Result<((), ()), ()> {
     Ok(((), ()))
 }
