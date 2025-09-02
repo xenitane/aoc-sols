@@ -5,6 +5,7 @@ year=$2
 day=$3
 
 command cat >./extra/opts.rs <<OPTS
+#![allow(dead_code)]
 pub const INPUT_FILE_PATH: &str = "../inputs/${year}-${day}.txt";
 pub const TEST_INPUT_FILE_PATH: &str = "../test_inputs/${year}-${day}.txt";
 pub const TEST_OUTPUT_FILE_PATH: &str = "../test_outputs/${year}-${day}.txt";

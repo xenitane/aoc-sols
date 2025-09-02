@@ -1,10 +1,12 @@
+const DELIMS: &[u8] = "{},<>!".as_bytes();
+
 fn process_garbage(idx: &mut usize, input: &[u8], garbage: &mut u32) {
     if *idx == input.len() {
         return;
     }
     *idx += 1;
-    while *idx < input.len() && input[*idx] != /* > */ 0x3e {
-        if input[*idx] == /* ! */ 0x21 {
+    while *idx < input.len() && input[*idx] != DELIMS[4] {
+        if input[*idx] == DELIMS[5] {
             *idx += 1;
         } else {
             *garbage += 1;
@@ -20,12 +22,11 @@ fn calculate_score(idx: &mut usize, score: u32, input: &[u8], garbage: &mut u32)
 
     *idx += 1;
     let mut res = score;
-    while *idx < input.len() && input[*idx] != /* } */ 0x7d {
+    while *idx < input.len() && input[*idx] != DELIMS[1] {
         res += match input[*idx] {
-            /* { */ 0x7b => calculate_score(idx, score + 1, input, garbage),
-            /* , */ 0x2c => 0,
-            /* < */
-            0x3c => {
+            val if val == DELIMS[0] => calculate_score(idx, score + 1, input, garbage),
+            val if val == DELIMS[2] => 0,
+            val if val == DELIMS[3] => {
                 process_garbage(idx, input, garbage);
                 0
             }
