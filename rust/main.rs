@@ -18,7 +18,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn aa() -> Result<(), ()> {
+    fn solve() -> Result<(), ()> {
         let input = lib::read_entire_file(opts::TEST_INPUT_FILE_PATH)?;
         let expected = lib::read_entire_file(opts::TEST_OUTPUT_FILE_PATH)?;
         let res = sol::solve(&input)?;

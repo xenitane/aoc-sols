@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-const INS: &[u8] = "psx".as_bytes();
-
 const LEN: usize = 16;
 const ITERATIONS: usize = 1_000_000_000;
 
@@ -14,15 +12,15 @@ enum Instruction {
 fn make_instruction(i_str: &str) -> Instruction {
     let bts = i_str.as_bytes();
     match bts[0] {
-        val if val == INS[1] => Instruction::Spin(i_str[1..].parse().unwrap()),
-        val if val == INS[2] => {
+        b's' => Instruction::Spin(i_str[1..].parse().unwrap()),
+        b'x' => {
             let poss: Vec<_> = i_str[1..]
                 .split('/')
                 .map(|v| v.parse::<usize>().unwrap())
                 .collect();
             Instruction::Swp0(poss[0], poss[1])
         }
-        val if val == INS[0] => Instruction::Swp1(bts[1], bts[3]),
+        b'p' => Instruction::Swp1(bts[1], bts[3]),
         _ => unreachable!(),
     }
 }
