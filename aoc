@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
 
 declare -rA lang_ext=(
-    ["haskell"]="hs"
-    ["rust"]="rs"
-    ["zig"]="zig"
+	["haskell"]="hs"
+	["rust"]="rs"
+	["zig"]="zig"
 )
 
 lang_list=()
 for lang in "${!lang_ext[@]}"; do
-    n_cur="${cur}${cur:+, }$lang"
-    if [[ ${#n_cur} -gt 20 ]]; then
-        lang_list+=("${cur},")
-        cur=$lang
-    else
-        cur=$n_cur
-    fi
+	n_cur="${cur}${cur:+, }$lang"
+	if [[ ${#n_cur} -gt 20 ]]; then
+		lang_list+=("${cur},")
+		cur=$lang
+	else
+		cur=$n_cur
+	fi
 done
 lang_list+=("${cur}")
 
 unset lang cur n_cur
 
 function usage() {
-    command cat <<USAGE >&2
+	command cat <<USAGE >&2
 Usage:
         aoc help # prints this help message
         aoc [mode] [language] [year] [day]
@@ -36,10 +36,10 @@ modes:
 languages:
     the list of available languages:
 $(
-        for aa in "${lang_list[@]}"; do
-            printf "        %s\n" "$aa"
-        done
-    )
+		for aa in "${lang_list[@]}"; do
+			printf "        %s\n" "$aa"
+		done
+	)
 
 notes:
     - year and day must be in YYYY and DD format
@@ -47,14 +47,14 @@ USAGE
 }
 
 if [[ $# -eq 1 && "$1" == "help" ]]; then
-    >&2 usage
-    exit
+	>&2 usage
+	exit
 fi
 
 if [[ $# -ne 4 ]]; then
-    >&2 echo provide appropriate arguments
-    usage
-    exit 1
+	>&2 echo provide appropriate arguments
+	usage
+	exit 1
 fi
 
 mode=$1
@@ -63,36 +63,36 @@ year=$3
 day=$4
 
 if [[ ! $year =~ ^[0-9]{4}$ || $year -lt 2015 || ! $day =~ ^[0-9]{2}$ || ${day#0} -lt 1 || ${day#0} -gt 25 ]]; then
-    >&2 echo invalid parameters
-    usage
-    exit 1
+	>&2 echo invalid parameters
+	usage
+	exit 1
 fi
 
 if [[ -z ${lang_ext[$language]} ]]; then
-    >&2 echo invalid language selected
-    usage
-    exit 1
+	>&2 echo invalid language selected
+	usage
+	exit 1
 fi
 
 case $mode in
 new)
-    touch {test_inputs,test_outputs}/$year-$day.txt
-    if [[ -f .cookie && ! -f inputs/${year}-${day}.txt ]]; then
-        curl -sfLb "$(command cat .cookie)" https://adventofcode.com/${year}/day/${day#0}/input | sed -z '$ s/\n$//' >inputs/${year}-${day}.txt
-    else
-        touch inputs/$year-$day.txt
-    fi
-    if [[ ! -f $language/sol/$year-$day.${lang_ext[$language]} ]]; then
-        cp ${language}/template.${lang_ext[$language]} $language/sol/$year-$day.${lang_ext[$language]}
-    fi
-    exit 0
-    ;;
+	touch {test_inputs,test_outputs}/$year-$day.txt
+	if [[ -f .cookie && ! -f inputs/${year}-${day}.txt ]]; then
+		curl -sfLb "$(command cat .cookie)" https://adventofcode.com/${year}/day/${day#0}/input | sed -z '$ s/\n$//' >inputs/${year}-${day}.txt
+	else
+		touch inputs/$year-$day.txt
+	fi
+	if [[ ! -f $language/sol/$year-$day.${lang_ext[$language]} ]]; then
+		cp ${language}/template.${lang_ext[$language]} $language/src/sol/$year-$day.${lang_ext[$language]}
+	fi
+	exit 0
+	;;
 test | run) ;;
 *)
-    >&2 echo invalid mode selected
-    usage
-    exit 1
-    ;;
+	>&2 echo invalid mode selected
+	usage
+	exit 1
+	;;
 esac
 
 cd $language

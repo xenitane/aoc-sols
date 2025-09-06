@@ -10,7 +10,7 @@ zig-out/
 build/
 build-*/
 docgen_tmp/
-extra/Opts.zig
+src/extra/Opts.zig
 
 # End of https://www.toptal.com/developers/gitignore/api/zig
 

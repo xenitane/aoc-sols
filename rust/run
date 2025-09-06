@@ -4,7 +4,7 @@ mode=$1
 year=$2
 day=$3
 
-command cat >./extra/opts.rs <<OPTS
+command cat >src/extra/opts.rs <<OPTS
 #![allow(dead_code)]
 pub const INPUT_FILE_PATH: &str = "../inputs/${year}-${day}.txt";
 pub const TEST_INPUT_FILE_PATH: &str = "../test_inputs/${year}-${day}.txt";
@@ -18,11 +18,11 @@ mkdir -p build
 
 case $mode in
 test)
-	rustc -O --test -o build/${year}-${day}-test main.rs &&
+	rustc -O --test -o build/${year}-${day}-test src/main.rs &&
 		./build/${year}-${day}-test
 	;;
 run)
-	rustc -O -o build/${year}-${day}-test main.rs &&
+	rustc -O -o build/${year}-${day}-test src/main.rs &&
 		./build/${year}-${day}-test | tee ../outputs/$year-$day.txt
 	;;
 *)

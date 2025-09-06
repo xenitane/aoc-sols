@@ -8,7 +8,7 @@ flags="-DYEAR=\"$year\" -DDAY=\"$day\""
 
 [[ -d "hs-out" ]] || mkdir -p "hs-out"
 
-command cat >extra/Opts.hs <<OPTS
+command cat >src/extra/Opts.hs <<OPTS
 module Opts where
 
 input_file_path :: FilePath
@@ -23,13 +23,13 @@ OPTS
 
 case $mode in
 test)
-	ghci -DTEST_MODE -i./extra main.hs sol/${year}-${day}.hs <<CMD
+	ghci -DTEST_MODE -isrc/extra src/main.hs src/sol/${year}-${day}.hs <<CMD
 main
 :q
 CMD
 	;;
 run)
-	ghc -dynamic -O2 -i./extra main.hs sol/${year}-${day}.hs -o ./hs-out/${year}-${day} &&
+	ghc -dynamic -O2 -isrc/extra src/main.hs src/sol/${year}-${day}.hs -o ./hs-out/${year}-${day} &&
 		./hs-out/${year}-${day} | tee ../outputs/$year-$day.txt
 	;;
 *)

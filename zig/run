@@ -4,7 +4,7 @@ mode=$1
 year=$2
 day=$3
 
-command cat >extra/Opts.zig <<OPTS
+command cat >src/extra/Opts.zig <<OPTS
 pub const input_file_path: []const u8="../inputs/${year}-${day}.txt";
 pub const test_input_file_path: []const u8="../test_inputs/${year}-${day}.txt";
 pub const test_output_file_path: []const u8="../test_outputs/${year}-${day}.txt";

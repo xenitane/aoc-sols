@@ -1,2 +1,2 @@
 build/
-extra/opts.rs
+src/extra/opts.rs
