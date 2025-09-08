@@ -14,12 +14,17 @@ fn next(cur: u32, factor: u32) -> u32 {
 
 pub fn solve(input: &str) -> Result<(u32, u32), ()> {
     let (a, b) = {
-        let mut tokens = input
+        let tokens: Vec<_> = input
             .lines()
-            .map(|line| line.split_whitespace().rev().next().unwrap());
-        let a: u32 = tokens.next().unwrap().parse().unwrap();
-        let b: u32 = tokens.next().unwrap().parse().unwrap();
-        (a, b)
+            .map(|line| {
+                line.split_whitespace()
+                    .last()
+                    .unwrap()
+                    .parse::<u32>()
+                    .unwrap()
+            })
+            .collect();
+        (tokens[0], tokens[1])
     };
     let first = {
         let (mut a, mut b) = (a, b);

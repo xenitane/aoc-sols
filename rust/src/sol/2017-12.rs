@@ -18,14 +18,12 @@ pub fn solve(input: &str) -> Result<(u32, u32), ()> {
     let adj: HashMap<_, _> = input
         .lines()
         .map(|line| {
-            let mut tokens = line.split(&[' ', ',']).filter(|s| !s.is_empty());
-            let id: u32 = tokens.next().unwrap().parse().unwrap();
-            tokens.next();
-            let mut v = vec![];
-            while let Some(t) = tokens.next() {
-                v.push(t.parse::<u32>().unwrap());
-            }
-            (id, v)
+            let tokens: Vec<_> = line
+                .split(&[' ', ',', '<', '-', '>'])
+                .filter(|s| !s.is_empty())
+                .map(|t| t.parse::<u32>().unwrap())
+                .collect();
+            (tokens[0], tokens[1..].to_vec())
         })
         .collect();
     let mut vis = HashSet::new();

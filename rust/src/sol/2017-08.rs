@@ -4,16 +4,15 @@ pub fn solve(input: &str) -> Result<(i32, i32), ()> {
     let instructions: Vec<_> = input
         .lines()
         .map(|line| {
-            let mut tokens = line.split_whitespace();
-            let target_reg = tokens.next().unwrap();
+            let tokens: Vec<_> = line.split_whitespace().collect();
+            let target_reg = tokens[0];
             let amount = {
-                let dir = tokens.next().unwrap();
-                tokens.next().unwrap().parse::<i32>().unwrap() * if dir == "dec" { -1 } else { 1 }
+                let dir = tokens[1];
+                tokens[2].parse::<i32>().unwrap() * if dir == "dec" { -1 } else { 1 }
             };
-            tokens.next();
-            let comp_reg = tokens.next().unwrap();
-            let comp_op = tokens.next().unwrap();
-            let comp_val: i32 = tokens.next().unwrap().parse().unwrap();
+            let comp_reg = tokens[4];
+            let comp_op = tokens[5];
+            let comp_val: i32 = tokens[6].parse().unwrap();
             (target_reg, amount, (comp_reg, comp_op, comp_val))
         })
         .collect();

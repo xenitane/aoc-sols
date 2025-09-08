@@ -11,10 +11,12 @@ pub fn solve(input: &str) -> Result<(u32, u32), ()> {
     let layers: Vec<_> = input
         .lines()
         .map(|line| {
-            let mut tokens = line.split(&[' ', ':']).filter(|s| !s.is_empty());
-            let depth: u32 = tokens.next().unwrap().parse().unwrap();
-            let range: u32 = tokens.next().unwrap().parse().unwrap();
-            (depth, range)
+            let tokens: Vec<_> = line
+                .split(&[' ', ':'])
+                .filter(|s| !s.is_empty())
+                .map(|v| v.parse::<u32>().unwrap())
+                .collect();
+            (tokens[0], tokens[1])
         })
         .collect();
     let first = {

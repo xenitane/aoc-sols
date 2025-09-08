@@ -59,7 +59,7 @@ fn apply_dance_moves(seq: &mut [u8; LEN], instructions: &Vec<Instruction>) {
 
 pub fn solve(input: &str) -> Result<(String, String), ()> {
     let instructions: Vec<_> = input.split(',').map(make_instruction).collect();
-    let mut seq: [u8; LEN] = std::array::from_fn(|i| 97 + i as u8);
+    let mut seq: [u8; LEN] = std::array::from_fn(|i| b'a' + i as u8);
     let first = {
         apply_dance_moves(&mut seq, &instructions);
         match String::from_utf8(seq.to_vec()) {

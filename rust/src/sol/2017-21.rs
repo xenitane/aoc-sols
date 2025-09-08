@@ -46,11 +46,9 @@ fn all_variants(mat: Vec<Vec<bool>>) -> Vec<Vec<Vec<bool>>> {
 }
 
 fn parse_enhancer(line: &str) -> (Vec<Vec<Vec<bool>>>, Vec<Vec<bool>>) {
-    let mut tokens = line.split_whitespace();
-    let input_str = tokens.next().unwrap();
-    tokens.next();
-    let output_str = tokens.next().unwrap();
-
+    let tokens: Vec<_> = line.split_whitespace().collect();
+    let input_str = tokens[0];
+    let output_str = tokens[2];
     (all_variants(make_mat(input_str)), make_mat(output_str))
 }
 

@@ -72,18 +72,23 @@ pub fn solve(input: &str) -> Result<(&str, u32), ()> {
     let mut tree_info: HashMap<_, _> = input
         .lines()
         .map(|line| {
-            let mut tokens = line.split(&[' ', ',', '(', ')']).filter(|s| !s.is_empty());
-            let key = tokens.next().unwrap();
-            let weight: u32 = tokens.next().unwrap().parse().unwrap();
-            if tokens.next() == None {
-                (key, (weight, None))
-            } else {
-                let mut children_keys = vec![];
-                while let Some(ch) = tokens.next() {
-                    children_keys.push(ch);
-                }
-                (key, (weight, Some(children_keys)))
-            }
+            let tokens: Vec<_> = line
+                .split(&[' ', ',', '(', ')'])
+                .filter(|s| !s.is_empty())
+                .collect();
+            let key = tokens[0];
+            let weight: u32 = tokens[1].parse().unwrap();
+            (
+                key,
+                (
+                    weight,
+                    if tokens.len() == 2 {
+                        None
+                    } else {
+                        Some(tokens[3..].to_vec())
+                    },
+                ),
+            )
         })
         .collect();
 
