@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 const SIMULATION_TIME: usize = 10_000;
 
-#[derive(Clone, Copy)]
 struct Particle {
     p: [isize; 3],
     v: [isize; 3],
@@ -10,7 +9,7 @@ struct Particle {
 }
 
 impl Particle {
-    fn pos_at_t(self, t: isize) -> [isize; 3] {
+    fn pos_at_t(&self, t: isize) -> [isize; 3] {
         let fv = t;
         let fa = (t * (t + 1)) / 2;
         let mut res = [0isize; 3];
@@ -47,7 +46,7 @@ pub fn solve(input: &str) -> Result<(usize, usize), ()> {
         let mut res = 0usize;
         let mut min_acc = isize::MAX;
 
-        for (i, particle) in particles.clone().into_iter().enumerate() {
+        for (i, particle) in particles.iter().enumerate() {
             let mut abs_acc = 0;
             for j in 0..3 {
                 abs_acc += isize::abs(particle.a[j]);

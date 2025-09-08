@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-#[derive(PartialEq)]
 enum Val<'a> {
     Raw(i64),
     Reg(&'a str),
@@ -29,7 +28,6 @@ impl<'a> Val<'a> {
     }
 }
 
-#[derive(PartialEq)]
 enum Instruction<'a> {
     Snd(Val<'a>),
     Set(&'a str, Val<'a>),
@@ -140,7 +138,7 @@ pub fn solve(input: &str) -> Result<(i64, usize), ()> {
             receive_queue: VecDeque::new(),
         };
         loop {
-            if system.instruction_pointer > asm_ins.len() {
+            if system.instruction_pointer >= asm_ins.len() {
                 break 0;
             }
             let (Some(jump), _) = asm_ins[system.instruction_pointer].apply(&mut system, false)

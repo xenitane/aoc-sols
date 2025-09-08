@@ -1,16 +1,18 @@
+const KNOT_HASH_PADDING: [usize; 5] = [17, 31, 73, 47, 23];
+const ITERATIONS: usize = 64;
+
 fn knot_hash(str: String) -> [bool; 128] {
     let lengths: Vec<_> = {
         let mut lengths: Vec<_> = str.bytes().map(|v| v as usize).collect();
-        for nl in [17, 31, 73, 47, 23] {
+        for nl in KNOT_HASH_PADDING {
             lengths.push(nl);
         }
         lengths
     };
-    let rounds = 64;
     let mut seq: [u8; 256] = std::array::from_fn(|i| i as u8);
     let mut idx: usize = 0;
     let mut skips: usize = 0;
-    for _ in 0..rounds {
+    for _ in 0..ITERATIONS {
         for len in &lengths {
             if *len != 1 && *len <= 256 {
                 let mut temp_seq = [0u8; 256];

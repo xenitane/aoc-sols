@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+const ITERATIONS0: usize = if cfg!(test) { 2 } else { 5 };
+const ITERATIONS1: usize = if cfg!(test) { 0 } else { 13 };
+
 fn make_mat(mat: &str) -> Vec<Vec<bool>> {
     mat.split('/')
         .map(|row| row.bytes().map(|b| b == b'#').collect::<Vec<bool>>())
@@ -50,9 +53,6 @@ fn parse_enhancer(line: &str) -> (Vec<Vec<Vec<bool>>>, Vec<Vec<bool>>) {
 
     (all_variants(make_mat(input_str)), make_mat(output_str))
 }
-
-const ITERATIONS0: usize = if cfg!(test) { 2 } else { 5 };
-const ITERATIONS1: usize = if cfg!(test) { 0 } else { 13 };
 
 fn enhance_mat(
     state: &mut Vec<Vec<bool>>,
