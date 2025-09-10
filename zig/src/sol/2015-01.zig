@@ -13,7 +13,7 @@ pub fn solve(_: std.mem.Allocator, file_content: []const u8) !Result {
                     res.second = idx;
                 }
             },
-            else => return error.Unreachable,
+            else => @panic("unreachable"),
         }
     }
 

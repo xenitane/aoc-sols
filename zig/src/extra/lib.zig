@@ -7,14 +7,14 @@ pub fn Result(comptime U: type, comptime V: type) type {
 
         const Self = @This();
 
-        pub fn print(self: Self, writer: anytype) !void {
+        pub fn print(self: Self, writer: *std.Io.Writer) !void {
             try print_value(U, writer, self.first);
             try print_value(V, writer, self.second);
         }
     };
 }
 
-fn print_value(comptime T: type, writer: anytype, value: T) !void {
+fn print_value(comptime T: type, writer: *std.Io.Writer, value: T) !void {
     switch (@typeInfo(T)) {
         .int => {
             try writer.print("{d}\n", .{value});

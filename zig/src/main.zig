@@ -17,7 +17,11 @@ pub fn main() !void {
     defer ac.free(file_content);
 
     const res = try solve(ac, file_content);
-    try res.print(std.io.getStdOut().writer());
+    var buffer: [2048]u8 = undefined;
+    var stdout_writer = std.fs.File.stdout().writer(&buffer);
+    const writer = &stdout_writer.interface;
+    try res.print(writer);
+    try writer.flush();
 }
 
 test solve {
@@ -29,9 +33,9 @@ test solve {
     defer ally.free(out_file_content);
 
     const res = try solve(ally, in_file_content);
-    var string_builder = std.ArrayList(u8).init(ally);
-    defer string_builder.deinit();
-    try res.print(string_builder.writer());
+    var string_builder = std.ArrayList(u8).empty;
+    defer string_builder.deinit(ally);
+    try res.print(string_builder.writer(ally));
 
     while (string_builder.getLastOrNull()) |elem| {
         if (!std.ascii.isWhitespace(elem)) {
